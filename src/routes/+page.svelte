@@ -15056,7 +15056,7 @@
                   </div>
                 {/if}
 
-                {#if !readOnlyRole && selectedSessionId && (conversation?.thread.turns.length ?? 0) > 0}
+                {#if !readOnlyRole && selectedSessionId && (conversation?.thread.turns.length ?? 0) > 0 && (rollbackTargetsLoading || Boolean(rollbackTargetsError) || !rollbackTargetsPayload || rollbackTargetsPayload.targets.length > 0)}
                   <div
                     class="rounded-2xl border px-3 py-2 shadow-sm"
                     style="border-color: var(--line); background: var(--panel-strong); color: var(--ink-strong);"
