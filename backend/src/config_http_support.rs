@@ -158,7 +158,8 @@ pub(crate) async fn config_models_payload(
         let normalized = models
             .into_iter()
             .filter(|model| {
-                model.get("id")
+                model
+                    .get("id")
                     .and_then(Value::as_str)
                     .is_some_and(|value| !value.trim().is_empty())
             })
