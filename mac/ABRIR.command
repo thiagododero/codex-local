@@ -8,6 +8,7 @@ DATA_DIR="$SUPPORT_DIR/data"
 RUNTIME_DIR="$SUPPORT_DIR/runtime"
 LOG_DIR="$SUPPORT_DIR/logs"
 MODEL_FILE="$SUPPORT_DIR/model.txt"
+PROJECT_ROOT_FILE="$SUPPORT_DIR/projects-root.txt"
 PASSWORD_FILE="$SUPPORT_DIR/ui-password.txt"
 SECRET_FILE="$SUPPORT_DIR/session-secret.txt"
 PID_FILE="$RUNTIME_DIR/backend.pid"
@@ -49,6 +50,29 @@ find_ollama() {
   return 1
 }
 
+choose_projects_root() {
+  if [[ -d "$HOME/Desktop/PROYECTOS" ]]; then
+    echo "$HOME/Desktop/PROYECTOS"
+    return 0
+  fi
+
+  local selected
+  selected="$(osascript <<'APPLESCRIPT'
+try
+  set selectedFolder to choose folder with prompt "Elegí la carpeta que Codex Local puede ver y modificar"
+  return POSIX path of selectedFolder
+on error number -128
+  return ""
+end try
+APPLESCRIPT
+)"
+  selected="$(printf "%s" "$selected" | sed 's:/*$::')"
+  if [[ -z "$selected" ]]; then
+    return 1
+  fi
+  echo "$selected"
+}
+
 CODEX_BIN="$(find_codex || true)"
 if [[ -z "$CODEX_BIN" ]]; then
   echo "❌ No encontré Codex CLI en esta Mac."
@@ -62,6 +86,29 @@ if [[ -z "$OLLAMA_BIN" ]]; then
   read "?Enter para cerrar..."
   exit 1
 fi
+
+if [[ ! -f "$PROJECT_ROOT_FILE" ]]; then
+  echo "Configurando la carpeta permitida…"
+  PROJECT_ROOT="$(choose_projects_root || true)"
+  if [[ -z "$PROJECT_ROOT" ]]; then
+    echo "❌ No se eligió ninguna carpeta. No se inició Codex Local."
+    read "?Enter para cerrar..."
+    exit 1
+  fi
+  printf "%s
+" "$PROJECT_ROOT" > "$PROJECT_ROOT_FILE"
+  chmod 600 "$PROJECT_ROOT_FILE"
+fi
+
+PROJECT_ROOT="$(cat "$PROJECT_ROOT_FILE" | tr -d '\r\n')"
+if [[ ! -d "$PROJECT_ROOT" ]]; then
+  echo "❌ La carpeta permitida ya no existe:"
+  echo "$PROJECT_ROOT"
+  echo "Ejecutá CAMBIAR_CARPETA.command y elegí otra."
+  read "?Enter para cerrar..."
+  exit 1
+fi
+PROJECT_ROOT="$(cd "$PROJECT_ROOT" && pwd -P)"
 
 if ! curl -fsS --max-time 2 http://127.0.0.1:11434/api/tags >/dev/null 2>&1; then
   echo "Iniciando Ollama…"
@@ -84,7 +131,7 @@ MODEL="qwen3.5:9b"
 if ! "$OLLAMA_BIN" list 2>/dev/null | awk 'NR>1 {print $1}' | grep -Fxq "$MODEL"; then
   echo "No encontré el modelo local $MODEL."
   read "ANSWER?¿Querés descargarlo ahora con Ollama? [S/n] "
-  ANSWER="${ANSWER:-S}"
+  if [[ -z "$ANSWER" ]]; then ANSWER="S"; fi
   if [[ "$ANSWER" =~ ^[SsYy]$ ]]; then
     "$OLLAMA_BIN" pull "$MODEL"
   else
@@ -98,8 +145,12 @@ cat > "$CODEX_HOME_LOCAL/config.toml" <<EOF
 model = "$MODEL"
 model_provider = "codex-local-ollama"
 model_context_window = 32768
-approval_policy = "never"
-sandbox_mode = "danger-full-access"
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+web_search = "disabled"
+
+[sandbox_workspace_write]
+network_access = false
 
 [model_providers.codex-local-ollama]
 name = "Codex Local · Ollama"
@@ -113,7 +164,7 @@ supports_websockets = false
 EOF
 
 if [[ ! -f "$PASSWORD_FILE" ]]; then
-  openssl rand -hex 10 > "$PASSWORD_FILE"
+  openssl rand -hex 16 > "$PASSWORD_FILE"
   chmod 600 "$PASSWORD_FILE"
 fi
 UI_PASSWORD="$(cat "$PASSWORD_FILE" | tr -d '\r\n')"
@@ -127,7 +178,6 @@ SESSION_SECRET="$(cat "$SECRET_FILE" | tr -d '\r\n')"
 BACKEND_BIN="$ROOT_DIR/dist/backend/aarch64-apple-darwin/backend"
 if [[ ! -x "$BACKEND_BIN" ]]; then
   echo "❌ Falta el backend precompilado para Apple Silicon."
-  echo "Descargá el ZIP generado por GitHub Actions para la rama codex-local-v3."
   read "?Enter para cerrar..."
   exit 1
 fi
@@ -154,28 +204,10 @@ print(json.dumps([{
 PY
 )"
 
-echo "Iniciando Codex Local v3…"
+echo "Iniciando Codex Local v3 en MODO SEGURO…"
 (
   cd "$ROOT_DIR"
-  env \
-    HOST="127.0.0.1" \
-    PORT="$PORT" \
-    CODEX_WEBUI_BASE_PATH="/" \
-    CODEX_WEBUI_CODEX_BIN="$CODEX_BIN" \
-    CODEX_HOME="$CODEX_HOME_LOCAL" \
-    CODEX_WEBUI_DATA_DIR="$DATA_DIR" \
-    CODEX_WEBUI_DEFAULT_PROFILE_ID="local" \
-    CODEX_WEBUI_PROFILES_JSON="$PROFILES_JSON" \
-    CODEX_WEBUI_ALLOWED_ROOTS="$HOME" \
-    CODEX_WEBUI_PASSWORD="$UI_PASSWORD" \
-    CODEX_WEBUI_OWNER_PASSWORD="$UI_PASSWORD" \
-    CODEX_WEBUI_SESSION_SECRET="$SESSION_SECRET" \
-    CODEX_WEBUI_FORCE_YOLO="true" \
-    CODEX_WEBUI_PER_SESSION_APP_SERVERS="true" \
-    CODEX_WEBUI_MAX_APP_SERVERS="2" \
-    CODEX_WEBUI_APP_SERVER_TIMEOUT_SECONDS="3600" \
-    CODEX_WEBUI_APP_SERVER_HANDOFF="true" \
-    "$BACKEND_BIN" >> "$LOG_FILE" 2>&1 &
+  env     HOST="127.0.0.1"     PORT="$PORT"     CODEX_WEBUI_BASE_PATH="/"     CODEX_WEBUI_CODEX_BIN="$CODEX_BIN"     CODEX_HOME="$CODEX_HOME_LOCAL"     CODEX_WEBUI_DATA_DIR="$DATA_DIR"     CODEX_WEBUI_DEFAULT_PROFILE_ID="local"     CODEX_WEBUI_PROFILES_JSON="$PROFILES_JSON"     CODEX_WEBUI_ALLOWED_ROOTS="$PROJECT_ROOT"     CODEX_WEBUI_PASSWORD="$UI_PASSWORD"     CODEX_WEBUI_OWNER_PASSWORD="$UI_PASSWORD"     CODEX_WEBUI_SESSION_SECRET="$SESSION_SECRET"     CODEX_WEBUI_REQUIRE_OWNER="true"     CODEX_WEBUI_REQUIRE_ORIGIN_HEADER="true"     CODEX_WEBUI_COOKIE_SAMESITE="strict"     CODEX_WEBUI_TRUST_PROXY_HEADERS="false"     CODEX_WEBUI_ENABLE_SYSTEM_SHUTDOWN="false"     CODEX_WEBUI_DEFAULT_AUTO_APPROVE="manual"     CODEX_WEBUI_PER_SESSION_APP_SERVERS="true"     CODEX_WEBUI_MAX_APP_SERVERS="2"     CODEX_WEBUI_APP_SERVER_TIMEOUT_SECONDS="3600"     CODEX_WEBUI_APP_SERVER_HANDOFF="true"     "$BACKEND_BIN" >> "$LOG_FILE" 2>&1 &
   echo $! > "$PID_FILE"
 )
 
@@ -202,12 +234,16 @@ printf "%s" "$UI_PASSWORD" | pbcopy
 open "http://127.0.0.1:$PORT/"
 
 echo ""
-echo "✅ Codex Local v3 está abierto."
+echo "✅ Codex Local v3 está abierto en MODO SEGURO."
 echo "Motor: $("$CODEX_BIN" --version 2>/dev/null || echo Codex)"
 echo "Modelo: $MODEL · Ollama"
+echo "Carpeta permitida: $PROJECT_ROOT"
 echo "Contexto: 32k"
-echo "App servers simultáneos: 2"
-echo "Acceso: danger-full-access / aprobación never"
+echo "Permisos: workspace-write / aprobación on-request"
+echo "Red del sandbox: desactivada por defecto"
+echo "Servidor: sólo 127.0.0.1"
 echo "Contraseña local copiada al portapapeles."
-echo "Podés cerrar esta Terminal."
-sleep 2
+echo ""
+echo "El modo Full Access NO está forzado. Si alguna tarea realmente lo necesita,"
+echo "podés habilitarlo explícitamente por sesión desde la interfaz."
+sleep 3
