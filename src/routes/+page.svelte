@@ -9176,7 +9176,9 @@
     }
 
     if (command === "power" && !args) {
-      openComposerSettings("security");
+      composerSettingsAnchor = "security";
+      composerSettingsTab = "security";
+      composerSettingsOpen = true;
       draft = "";
       scheduleComposerTextareaResize();
       return true;
