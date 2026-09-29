@@ -12,11 +12,11 @@
 - Active PR: **#1 — Codex Local v3: Ollama + Mac one-click test package**
 - PR state: **Draft**
 - Merge policy for this workstream: **do not merge until the current Mac package is validated on the real Mac**.
-- Current application-code head: `ddcadde` — `feat(ui): establish local workstation visual system`.
+- Current application-code head: `35b3c8d` — `fix(local): remove login gate and redundant rollback panel`.
 
 ## Validation status
 
-As of 2026-09-29 (before the current UI commit is built by GitHub):
+As of 2026-09-29:
 
 - **CI #31:** success.
 - **Build Mac Test Package #31:** success.
@@ -40,21 +40,23 @@ On 2026-09-29, the application was opened successfully on the target Apple Silic
 
 This is **physical-Mac validation of startup and basic UI availability only**. It is not a verification of the downloadable ZIP itself: `VERIFICAR.command`, clean-package launch, stale-build/session behavior, and the permission-control flows remain pending.
 
-### UI workstation baseline (not yet CI-packaged)
+### Rejected UI baseline and current local access change
 
-`ddcadde` establishes the first Codex Local visual system: a local-workstation shell, semantic indigo active state, more legible dark surfaces, bounded transcript width, composer focus treatment, visible keyboard focus, and a durable design-system reference at `design-system/codex-local/MASTER.md`.
+The first midnight/indigo UI baseline from `ddcadde` was reviewed locally and rejected by the user as visually inadequate. Its custom palette, shell styles, sidebar treatment, and draft design document were removed in `35b3c8d`; do not treat them as the design direction for future work.
 
-- **Implemented:** yes, and rendered locally from the checkout on the target Mac.
-- **Validated by local checks:** `pnpm check` and `node scripts/verify-static-build.mjs` passed.
-- **Not yet CI/build validated:** the new commit has not yet completed GitHub CI or the Mac package workflow.
-- **Not user-confirmed as a physical Mac test:** the agent opened and inspected the local UI, but the downloadable ZIP and interaction checklist still need the user's manual confirmation.
+`35b3c8d` changes the local launcher to use the backend's built-in authentication-free mode **only while bound to loopback**. It removes generated password/owner-password configuration and requires no login in the local UI. `127.0.0.1`, strict Origin checking, SameSite cookies, session secret, restricted workspace roots, and the separation between application security and agent permissions remain in place. It also removes the redundant global rollback-target panel; rollback remains contextual per turn with confirmation.
+
+- **Implemented:** yes.
+- **Validated locally:** `pnpm check`, production static-build verification, `zsh -n mac/ABRIR.command`, and a direct `GET /api/auth/session` after local relaunch (`authenticated: true`, `role: admin`). The local UI loaded without a password and without the global rollback panel.
+- **CI/build status:** CI and Build Mac were successful for `2f7f958` (the now-rejected first UI baseline). Results for `35b3c8d` are pending after push.
+- **Not user-confirmed as a physical Mac test:** this is an agent-run local smoke test, not a confirmation of the downloadable ZIP by the user.
 - **Local limitation:** this shell has no `cargo`; `node scripts/verify-security-regressions.mjs` stops at `cargo fmt --check`. GitHub Actions remains the authoritative native/security validation until Rust is installed locally.
 
 ## Current objective
 
 Deliver **Codex Local v3** for macOS Apple Silicon using the real Codex app-server with free local Ollama models, while keeping its state isolated from normal Codex usage.
 
-The immediate workstream is an incremental product-UI upgrade. The runtime, session isolation, localhost security controls, and permissions model remain unchanged; no third-party source code or assets were imported.
+The immediate workstream is a product-UI redesign based on an evidence-backed comparison of mature open-source coding-agent interfaces. Do not start another broad visual pass until the reference patterns and a concrete information architecture are reviewed; the runtime, session isolation, localhost security controls, and permissions model remain unchanged.
 
 ## Implemented and expected to work
 
@@ -111,11 +113,11 @@ The immediate workstream is an incremental product-UI upgrade. The runtime, sess
 
 ## Next required step
 
-Verify GitHub CI and the Apple Silicon package generated from `ddcadde`, then manually test that new unmodified artifact on the target Mac.
+Verify GitHub CI and the Apple Silicon package generated from `35b3c8d`, then manually test that new unmodified artifact on the target Mac.
 
 Suggested validation sequence:
 
-1. Download the unmodified artifact for `ddcadde` and run `VERIFICAR.command`.
+1. Download the unmodified artifact for `35b3c8d` and run `VERIFICAR.command`.
 2. Launch that package with `ABRIR.command`.
 3. Confirm installed Ollama models are detected automatically.
 4. Confirm an older/stale session does not remain bound to a missing model.
@@ -124,8 +126,9 @@ Suggested validation sequence:
 7. Test `/max`, `/safe`, and `/power`.
 8. Test **TODO AL PALO** and **Modo seguro**.
 9. Confirm the empty rollback panel no longer appears.
-10. Check the redesigned workspace at desktop and narrow widths, including keyboard focus and the mobile sidebar.
-11. Record every pass/failure in `docs/PROJECT_LOG.md` and update this file's validation status.
+10. Confirm launch and relaunch require no password while remaining unreachable from non-loopback addresses.
+11. Once a new UI direction is implemented, check it at desktop and narrow widths, including keyboard focus and the mobile sidebar.
+12. Record every pass/failure in `docs/PROJECT_LOG.md` and update this file's validation status.
 
 ## Continuity protocol
 
