@@ -5,6 +5,7 @@
 
   import { api } from "$lib/api";
   import MonacoTextEditor from "$lib/components/MonacoTextEditor.svelte";
+  import AgentPowerControls from "$lib/components/AgentPowerControls.svelte";
   import { localeSignal } from "$lib/i18n";
   import { m } from "$lib/paraglide/messages.js";
   import { getLocale } from "$lib/paraglide/runtime.js";
@@ -37,6 +38,7 @@
     NotificationSettings,
     PromptPreset,
     SelectedSkill,
+    SessionPreferences,
     UserRole
   } from "$lib/types";
 
@@ -74,6 +76,7 @@
     initialTab = null,
     onAutostartSaved = null,
     onSaveDefaultLanguageBridge = null,
+    onSaveDefaultSessionPreferences = null,
     onSaveThemeSettings = null,
     onNotificationSettingsSaved = null,
     onSavePromptPreset = null,
@@ -102,6 +105,7 @@
     initialTab?: SettingsTabId | null;
     onAutostartSaved?: ((enabled: boolean) => void | Promise<void>) | null;
     onSaveDefaultLanguageBridge?: ((enabled: boolean, outputLanguage: string) => void | Promise<void>) | null;
+    onSaveDefaultSessionPreferences?: ((preferences: Partial<SessionPreferences>) => void | Promise<void>) | null;
     onSaveThemeSettings?: ((settings: ThemeSettings) => void | Promise<void>) | null;
     onNotificationSettingsSaved?: ((settings: Partial<NotificationSettings>) => void | Promise<void>) | null;
     onSavePromptPreset?: ((preset: PromptPreset) => void | Promise<void>) | null;
@@ -1541,8 +1545,27 @@
               <span class="meta-pill subtle">{ui.unsaved}</span>
             {/if}
           </div>
-          <p class="field-note">{ui.defaultLanguageBridgeDescription}</p>
+          <p class="field-note">
+            Permisos predeterminados para chats nuevos. La seguridad externa del servidor sigue separada y protegida.
+          </p>
           <div class="catalog-list">
+            <AgentPowerControls
+              preferences={defaults}
+              disabled={readOnly || savingDefaults}
+              onChange={async (patch) => {
+                savingDefaults = true;
+                errorText = "";
+                try {
+                  await onSaveDefaultSessionPreferences?.(patch);
+                } catch (error) {
+                  errorText = error instanceof Error ? error.message : ui.failedSave;
+                } finally {
+                  savingDefaults = false;
+                }
+              }}
+            />
+            <div class="my-2 border-t border-gray-200"></div>
+            <p class="field-note">{ui.defaultLanguageBridgeDescription}</p>
             <label class="checkbox-card checkbox-card--compact">
               <input
                 class="checkbox-input"
