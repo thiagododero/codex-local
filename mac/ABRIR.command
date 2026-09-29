@@ -84,7 +84,7 @@ MODEL="qwen3.5:9b"
 if ! "$OLLAMA_BIN" list 2>/dev/null | awk 'NR>1 {print $1}' | grep -Fxq "$MODEL"; then
   echo "No encontré el modelo local $MODEL."
   read "ANSWER?¿Querés descargarlo ahora con Ollama? [S/n] "
-  ANSWER="\${ANSWER:-S}"
+  ANSWER="${ANSWER:-S}"
   if [[ "$ANSWER" =~ ^[SsYy]$ ]]; then
     "$OLLAMA_BIN" pull "$MODEL"
   else
