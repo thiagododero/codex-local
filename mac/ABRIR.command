@@ -13,9 +13,10 @@ CONFIG_VERSION_FILE="$SUPPORT_DIR/config-version.txt"
 PASSWORD_FILE="$SUPPORT_DIR/ui-password.txt"
 SECRET_FILE="$SUPPORT_DIR/session-secret.txt"
 PID_FILE="$RUNTIME_DIR/backend.pid"
+RUNNING_BUILD_FILE="$RUNTIME_DIR/running-build.txt"
 LOG_FILE="$LOG_DIR/backend.log"
 PORT=4173
-CONFIG_VERSION=3
+CONFIG_VERSION=4
 
 mkdir -p "$CODEX_HOME_LOCAL" "$DATA_DIR" "$RUNTIME_DIR" "$LOG_DIR"
 chmod 700 "$SUPPORT_DIR" "$CODEX_HOME_LOCAL" "$DATA_DIR" "$RUNTIME_DIR" "$LOG_DIR" 2>/dev/null || true
@@ -245,15 +246,35 @@ if [[ ! -x "$BACKEND_BIN" ]]; then
   exit 1
 fi
 
+PACKAGE_BUILD_COMMIT="$(awk -F= '/^source_commit=/ {print $2; exit}' "$ROOT_DIR/BUILD_INFO.txt" 2>/dev/null || true)"
+RUNNING_BUILD_COMMIT="$(cat "$RUNNING_BUILD_FILE" 2>/dev/null || true)"
+
 if [[ -f "$PID_FILE" ]]; then
   OLD_PID="$(cat "$PID_FILE" 2>/dev/null || true)"
   if [[ -n "$OLD_PID" ]] && kill -0 "$OLD_PID" >/dev/null 2>&1; then
-    printf "%s" "$UI_PASSWORD" | pbcopy
-    open "http://127.0.0.1:$PORT/"
-    echo "✅ Codex Local ya estaba ejecutándose."
-    exit 0
+    if [[ -n "$PACKAGE_BUILD_COMMIT" && "$RUNNING_BUILD_COMMIT" == "$PACKAGE_BUILD_COMMIT" ]]; then
+      printf "%s" "$UI_PASSWORD" | pbcopy
+      open "http://127.0.0.1:$PORT/"
+      echo "✅ Esta misma build de Codex Local ya estaba ejecutándose."
+      exit 0
+    fi
+
+    echo "Actualizando el backend en ejecución…"
+    kill "$OLD_PID" >/dev/null 2>&1 || true
+    for _ in {1..40}; do
+      kill -0 "$OLD_PID" >/dev/null 2>&1 || break
+      sleep 0.2
+    done
   fi
-  rm -f "$PID_FILE"
+  rm -f "$PID_FILE" "$RUNNING_BUILD_FILE"
+fi
+
+PORT_PID="$(lsof -nP -tiTCP:$PORT -sTCP:LISTEN 2>/dev/null | head -n 1 || true)"
+if [[ -n "$PORT_PID" ]]; then
+  echo "❌ El puerto $PORT ya está ocupado por otro proceso (PID $PORT_PID)."
+  echo "No voy a cerrarlo automáticamente porque podría no pertenecer a Codex Local."
+  read "?Enter para cerrar..."
+  exit 1
 fi
 
 PROFILES_JSON="$(CODEX_HOME_LOCAL="$CODEX_HOME_LOCAL" DATA_DIR="$DATA_DIR" python3 - <<'PY'
@@ -299,6 +320,13 @@ echo "Iniciando Codex Local…"
 )
 
 PID="$(cat "$PID_FILE")"
+if [[ -n "$PACKAGE_BUILD_COMMIT" ]]; then
+  printf "%s\n" "$PACKAGE_BUILD_COMMIT" > "$RUNNING_BUILD_FILE"
+else
+  printf "unknown\n" > "$RUNNING_BUILD_FILE"
+fi
+chmod 600 "$RUNNING_BUILD_FILE"
+
 for _ in {1..50}; do
   curl -fsS --max-time 2 "http://127.0.0.1:$PORT/healthz" >/dev/null 2>&1 && break
   if ! kill -0 "$PID" >/dev/null 2>&1; then
