@@ -152,6 +152,23 @@ pub(crate) async fn config_models_payload(
     state: &AppState,
     profile_id: &str,
 ) -> ApiResult<Vec<Value>> {
+    if let Ok(raw_models) = env::var("CODEX_WEBUI_LOCAL_MODELS_JSON")
+        && let Ok(models) = serde_json::from_str::<Vec<Value>>(&raw_models)
+    {
+        let normalized = models
+            .into_iter()
+            .filter(|model| {
+                model
+                    .get("id")
+                    .and_then(Value::as_str)
+                    .is_some_and(|value| !value.trim().is_empty())
+            })
+            .collect::<Vec<_>>();
+        if !normalized.is_empty() {
+            return Ok(normalized);
+        }
+    }
+
     let response = config_app_server_request(
         state,
         profile_id,
