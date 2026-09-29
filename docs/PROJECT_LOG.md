@@ -92,3 +92,56 @@ Codex Local is running locally from the checkout-derived development package. No
 
 ### Next step
 Run the complete real-package checklist against the unmodified Build Mac #31 artifact, then record the exact results before considering a merge.
+
+---
+
+## 2026-09-29 — Codex Local workstation UI baseline
+
+### Objective
+Begin an incremental visual upgrade of Codex Local v3 after reviewing comparable open-source agent interfaces, without replacing the existing Codex app-server runtime or reducing any security control.
+
+### Changes made
+- Added `design-system/codex-local/MASTER.md` as the durable product-UI source of truth: local-workstation direction, semantic color roles, interaction rules, responsive guardrails, and reference-project boundaries.
+- Reworked the default light and dark semantic palette toward a midnight/indigo local-workstation identity while preserving user-customizable theme settings.
+- Added scoped workspace, sidebar, session, transcript, and composer styling:
+  - indigo active-session edge rather than a generic card treatment;
+  - calmer dark surfaces and local-signal accent;
+  - focused composer state and primary send action;
+  - bounded readable transcript measure and scroll padding;
+  - visible keyboard focus treatment.
+- Declared the existing `compact` API on `AgentPowerControls`, resolving the Svelte type error from the compact use in the workspace.
+- No external project code, assets, or branding was copied. OpenCode, Codex WebUI, and Open WebUI were used as interaction references only.
+
+### Files affected
+- `design-system/codex-local/MASTER.md`
+- `src/lib/theme-customization.ts`
+- `src/lib/components/SessionSidebar.svelte`
+- `src/lib/components/AgentPowerControls.svelte`
+- `src/routes/+page.svelte`
+
+### Relevant commits
+- `ddcadde` — `feat(ui): establish local workstation visual system`
+
+### Validation performed and result
+- `pnpm check`: passed with 0 errors and 0 warnings.
+- `node scripts/verify-static-build.mjs`: passed after the production static build.
+- `git diff --check`: passed before commit.
+- The checkout-derived local development package was relaunched on the target Mac and the redesigned workspace was visually inspected in Chrome.
+- `node scripts/verify-security-regressions.mjs`: not runnable locally because `cargo` is absent; it stops at `cargo fmt --check` with `ENOENT`.
+
+### CI/build result
+- The prior continuity-documentation CI run at `aa1adf7` completed successfully.
+- CI and Build Mac results for `ddcadde` are pending after push. Do not label this UI baseline as CI/build validated until those runs complete.
+
+### Manual validation pending
+- Test the downloadable, unmodified Apple Silicon ZIP built from `ddcadde`.
+- Run `VERIFICAR.command`, clean-package launch/close/relaunch, Ollama model detection, stale session/build migration, permission commands and controls, and the empty rollback state.
+- Check the redesigned interface at 375 px, 768 px, 1024 px, and 1440 px, including keyboard focus and the mobile sidebar.
+
+### Decisions taken
+- Preserve the current backend/runtime architecture and all localhost/session/origin protections.
+- Treat the design system as an incremental product baseline, not a claim that the UI is complete.
+- Use GitHub Actions as the authority for native build and Rust security-regression validation until Rust is available locally.
+
+### Next step
+Push the UI commit and this continuity update to `codex-local-v3`, inspect the resulting CI and Apple Silicon package workflows, then perform the user-confirmed Mac package checklist.

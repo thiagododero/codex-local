@@ -12,11 +12,11 @@
 - Active PR: **#1 — Codex Local v3: Ollama + Mac one-click test package**
 - PR state: **Draft**
 - Merge policy for this workstream: **do not merge until the current Mac package is validated on the real Mac**.
-- Last application-code commit before continuity docs: `207adbf` — `ui: hide empty rollback panel`.
+- Current application-code head: `ddcadde` — `feat(ui): establish local workstation visual system`.
 
 ## Validation status
 
-As of 2026-09-29:
+As of 2026-09-29 (before the current UI commit is built by GitHub):
 
 - **CI #31:** success.
 - **Build Mac Test Package #31:** success.
@@ -40,9 +40,21 @@ On 2026-09-29, the application was opened successfully on the target Apple Silic
 
 This is **physical-Mac validation of startup and basic UI availability only**. It is not a verification of the downloadable ZIP itself: `VERIFICAR.command`, clean-package launch, stale-build/session behavior, and the permission-control flows remain pending.
 
+### UI workstation baseline (not yet CI-packaged)
+
+`ddcadde` establishes the first Codex Local visual system: a local-workstation shell, semantic indigo active state, more legible dark surfaces, bounded transcript width, composer focus treatment, visible keyboard focus, and a durable design-system reference at `design-system/codex-local/MASTER.md`.
+
+- **Implemented:** yes, and rendered locally from the checkout on the target Mac.
+- **Validated by local checks:** `pnpm check` and `node scripts/verify-static-build.mjs` passed.
+- **Not yet CI/build validated:** the new commit has not yet completed GitHub CI or the Mac package workflow.
+- **Not user-confirmed as a physical Mac test:** the agent opened and inspected the local UI, but the downloadable ZIP and interaction checklist still need the user's manual confirmation.
+- **Local limitation:** this shell has no `cargo`; `node scripts/verify-security-regressions.mjs` stops at `cargo fmt --check`. GitHub Actions remains the authoritative native/security validation until Rust is installed locally.
+
 ## Current objective
 
 Deliver **Codex Local v3** for macOS Apple Silicon using the real Codex app-server with free local Ollama models, while keeping its state isolated from normal Codex usage.
+
+The immediate workstream is an incremental product-UI upgrade. The runtime, session isolation, localhost security controls, and permissions model remain unchanged; no third-party source code or assets were imported.
 
 ## Implemented and expected to work
 
@@ -99,11 +111,11 @@ Deliver **Codex Local v3** for macOS Apple Silicon using the real Codex app-serv
 
 ## Next required step
 
-Manually test the artifact produced by Build Mac #31 on the target Mac.
+Verify GitHub CI and the Apple Silicon package generated from `ddcadde`, then manually test that new unmodified artifact on the target Mac.
 
 Suggested validation sequence:
 
-1. Download the unmodified artifact and run `VERIFICAR.command`.
+1. Download the unmodified artifact for `ddcadde` and run `VERIFICAR.command`.
 2. Launch that package with `ABRIR.command`.
 3. Confirm installed Ollama models are detected automatically.
 4. Confirm an older/stale session does not remain bound to a missing model.
@@ -112,7 +124,8 @@ Suggested validation sequence:
 7. Test `/max`, `/safe`, and `/power`.
 8. Test **TODO AL PALO** and **Modo seguro**.
 9. Confirm the empty rollback panel no longer appears.
-10. Record every pass/failure in `docs/PROJECT_LOG.md` and update this file's validation status.
+10. Check the redesigned workspace at desktop and narrow widths, including keyboard focus and the mobile sidebar.
+11. Record every pass/failure in `docs/PROJECT_LOG.md` and update this file's validation status.
 
 ## Continuity protocol
 
