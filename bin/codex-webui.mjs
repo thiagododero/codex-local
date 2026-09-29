@@ -11,8 +11,8 @@ import process from "node:process";
 import YAML from "yaml";
 
 const packageRoot = path.resolve(new URL("..", import.meta.url).pathname);
-const stateDir = path.join(os.homedir(), ".codex", "codex-webui");
-const configPath = path.join(os.homedir(), ".codex", "codex-webui.yml");
+const stateDir = expandHome(process.env.CODEX_WEBUI_STATE_DIR || path.join(os.homedir(), ".codex", "codex-webui"));
+const configPath = expandHome(process.env.CODEX_WEBUI_CONFIG_PATH || path.join(os.homedir(), ".codex", "codex-webui.yml"));
 const pidPath = path.join(stateDir, "server.pid");
 const serverMetaPath = path.join(stateDir, "server.json");
 const logPath = path.join(stateDir, "server.log");
