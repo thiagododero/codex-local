@@ -170,7 +170,7 @@
   const SESSION_LIST_VERSION_HINT_LIMIT = 240;
   const SESSION_DETAIL_VERSION_HINT_LIMIT = 5_000;
   const transcriptTurnEstimatedHeight = 420;
-  const transcriptTurnGap = 48;
+  const transcriptTurnGap = 24;
   const transcriptTurnOverscan = 1_200;
   const transcriptTurnMountLimit = 48;
 
@@ -14472,7 +14472,7 @@
     {/if}
   </div>
 {:else}
-<div class="flex h-[100dvh] min-h-[100dvh] w-full bg-white overflow-hidden font-sans text-gray-900" data-testid="workspace-shell">
+<div class="codex-workspace flex h-[100dvh] min-h-[100dvh] w-full bg-white overflow-hidden font-sans text-gray-900" data-testid="workspace-shell">
   {#if showConnectionSnackbar || feedbackSnackbar}
     <div class="workspace-snackbar-stack pointer-events-none fixed inset-x-0 z-[110] flex justify-center px-3 sm:px-6">
       <div class="flex w-full max-w-xl flex-col gap-2">
@@ -14540,7 +14540,7 @@
   <aside
     class:hidden={!mobileSidebarOpen && isMobileLayout}
     class={[
-      "h-full border-r border-gray-200 transition-all duration-300",
+      "codex-workspace__sidebar h-full border-r border-gray-200 transition-all duration-300",
       isMobileLayout
         ? "fixed inset-y-0 left-0 z-[130] w-[min(22rem,calc(100vw-1.5rem))] max-w-[calc(100vw-1.5rem)] shadow-2xl"
         : "w-[22rem] min-w-[22rem] max-w-[24rem] flex-shrink-0"
@@ -14706,7 +14706,7 @@
   </aside>
 
   <!-- Main Content -->
-  <main class="flex-1 flex flex-col h-full min-w-0 bg-white relative">
+  <main class="codex-workspace__main flex-1 flex flex-col h-full min-w-0 bg-white relative">
     <WorkspaceHeader
       activeWorkspaceTabId={activeWorkspaceTabId}
       bind:searchTriggerElement={sessionTurnSearchTriggerElement}
@@ -14815,14 +14815,14 @@
         </div>
       {/if}
       {#if activeWorkspaceTabId === "chat"}
-        <div class="h-full flex flex-col relative bg-white">
+        <div class="codex-workspace__chat h-full flex flex-col relative bg-white">
           <div
             bind:this={transcriptElement}
-            class="chat-transcript flex-1 overflow-y-auto pt-8 pb-8"
+            class="chat-transcript flex-1 overflow-y-auto pt-5 pb-6"
             onscroll={handleTranscriptScroll}
             style={`padding-bottom: calc(${transcriptDockReservePx}px + env(safe-area-inset-bottom));`}
           >
-            <div bind:this={transcriptContentElement} class="max-w-3xl mx-auto px-6 space-y-12">
+            <div bind:this={transcriptContentElement} class="codex-workspace__transcript max-w-5xl mx-auto px-4 space-y-6 sm:px-6">
               {#if loading || (loadingDetail && !conversation)}
                 <div class="space-y-6 animate-pulse mt-8">
                   <div class="h-4 bg-gray-100 rounded w-1/3"></div>
@@ -14932,7 +14932,7 @@
                   {@const turnModel = getTurnRenderModel(turn)}
                   {@const collapsedProgressCount = getCollapsedTurnProgressCount(turn)}
                   <div
-                    class={`space-y-8 rounded-[1.75rem] px-3 py-3 transition-[background-color,box-shadow,border-color] duration-300 ${
+                    class={`codex-workspace__turn space-y-5 rounded-xl px-0 py-2 transition-[background-color,box-shadow,border-color] duration-300 ${
                       sessionTurnSearchFocusedTurnId === turn.id
                         ? "border border-amber-200 bg-amber-50/50 shadow-[0_18px_40px_-32px_rgba(245,158,11,0.8)]"
                         : "border border-transparent"
@@ -14942,7 +14942,7 @@
                     use:measureTranscriptTurn={turn.id}
                   >
                     {#each turnModel.userItems as item (item.id)}
-                      <div class="flex flex-col items-end gap-2 max-w-[85%] ml-auto group/user-message">
+                      <div class="codex-workspace__user-message flex flex-col items-end gap-2 max-w-[85%] ml-auto group/user-message">
                         <div class="flex items-center gap-1 opacity-0 group-hover/user-message:opacity-100 transition-opacity">
                           <button class="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors" onclick={() => void copyMessageText(getUserText(item))} title={ui.copyMessage} type="button"><Copy size={13} /></button>
                           <button class="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors" onclick={() => editMessageText(getUserText(item))} title={ui.editInComposer} type="button"><Pencil size={13} /></button>
@@ -14971,7 +14971,7 @@
                       </div>
                     {/if}
 
-                    <div class="flex gap-4">
+                    <div class="codex-workspace__agent flex gap-4">
                       <div class="flex-shrink-0 w-8 h-8 rounded-lg bg-amber-600 text-white flex items-center justify-center shadow-sm mt-1"><Bot size={18} /></div>
                       <div class="flex-1 min-w-0 space-y-6">
                         {#if shouldCollapseTurnLogs(turn)}
@@ -15500,7 +15500,7 @@
                 </div>
               {/if}
 
-              <div class="relative group">
+              <div class="codex-workspace__composer-dock relative group">
                 {#if lastComposerHistoryPrompt}
                   <div class="mb-1.5 flex items-center gap-1.5 px-0.5">
                     <button
@@ -15588,7 +15588,7 @@
                     {/if}
                   </div>
                 {/if}
-                <form bind:this={composerPanelElement} class="composer-panel bg-white/95 border-2 border-gray-200 rounded-2xl shadow-2xl overflow-hidden transition-all duration-200 focus-within:-translate-y-0.5 focus-within:border-amber-400/70 focus-within:bg-white focus-within:shadow-[0_24px_60px_-34px_rgba(245,158,11,0.65)]" onsubmit={(event) => { event.preventDefault(); void submitComposer(); }}>
+                <form bind:this={composerPanelElement} class="codex-workspace__composer composer-panel bg-white/95 border-2 border-gray-200 rounded-2xl shadow-2xl overflow-hidden transition-all duration-200 focus-within:-translate-y-0.5 focus-within:border-amber-400/70 focus-within:bg-white focus-within:shadow-[0_24px_60px_-34px_rgba(245,158,11,0.65)]" onsubmit={(event) => { event.preventDefault(); void submitComposer(); }}>
                   <textarea bind:this={composerTextareaElement} bind:value={draft} class="composer-textarea w-full min-h-[3rem] overflow-y-hidden border-none bg-transparent px-4 py-3 pr-12 text-sm leading-6 text-gray-800 placeholder-gray-400 outline-none transition-colors duration-150 focus:outline-none focus:ring-0 focus:placeholder:text-amber-500/70 resize-none sm:min-h-[3.25rem]" oninput={handleComposerInput} onkeydown={handleComposerKeydown} placeholder={composerQueueModeActive ? ui.queueFollowUpPlaceholder : ui.askCodex} readonly={readOnlyRole} rows="1"></textarea>
                   
                   {#if draftAttachments.length > 0}
@@ -16583,6 +16583,96 @@
 {/if}
 
 <style>
+  /* Product shell: a continuous work surface, not a stack of marketing cards. */
+  .codex-workspace {
+    background: var(--bg) !important;
+    color: var(--ink-strong) !important;
+  }
+
+  .codex-workspace__sidebar {
+    border-color: var(--line) !important;
+  }
+
+  .codex-workspace__main,
+  .codex-workspace__chat {
+    background: var(--bg) !important;
+  }
+
+  .codex-workspace__transcript {
+    max-width: 72rem !important;
+  }
+
+  .codex-workspace__turn {
+    border-color: transparent;
+  }
+
+  .codex-workspace__turn:not(:last-child) {
+    border-bottom: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
+  }
+
+  .codex-workspace__turn .bg-amber-50\/50 {
+    border-color: color-mix(in srgb, var(--accent) 42%, var(--line)) !important;
+    background: color-mix(in srgb, var(--accent) 7%, var(--panel-strong)) !important;
+    box-shadow: none !important;
+  }
+
+  .codex-workspace__user-message > div:nth-child(2) {
+    border-color: color-mix(in srgb, var(--line) 86%, transparent) !important;
+    background: color-mix(in srgb, var(--panel-soft) 86%, var(--panel-strong)) !important;
+    box-shadow: none !important;
+  }
+
+  .codex-workspace__agent > div:first-child {
+    border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--line));
+    background: color-mix(in srgb, var(--accent) 12%, var(--panel-strong)) !important;
+    color: var(--accent) !important;
+    box-shadow: none !important;
+  }
+
+  .codex-workspace__composer-dock {
+    margin-inline: auto;
+    width: min(100%, 72rem);
+  }
+
+  .codex-workspace__composer {
+    border-color: var(--line) !important;
+    background: var(--panel-strong) !important;
+    box-shadow: 0 18px 36px -30px color-mix(in srgb, var(--ink-strong) 34%, transparent) !important;
+  }
+
+  .codex-workspace__composer:focus-within {
+    border-color: color-mix(in srgb, var(--accent) 58%, var(--line)) !important;
+    box-shadow: 0 18px 36px -28px color-mix(in srgb, var(--accent) 30%, transparent) !important;
+  }
+
+  .codex-workspace__composer .composer-toolbar {
+    border-color: color-mix(in srgb, var(--line) 78%, transparent) !important;
+    background: var(--panel-soft) !important;
+  }
+
+  .chat-transcript {
+    scroll-padding-top: 4rem;
+    scroll-padding-bottom: 13rem;
+  }
+
+  :global(.codex-workspace button:focus-visible),
+  :global(.codex-workspace input:focus-visible),
+  :global(.codex-workspace select:focus-visible),
+  :global(.codex-workspace textarea:focus-visible) {
+    outline: 2px solid var(--accent) !important;
+    outline-offset: 2px;
+  }
+
+  @media (max-width: 640px) {
+    .codex-workspace__transcript {
+      padding-inline: 1rem !important;
+    }
+
+    .codex-workspace__turn {
+      padding-block: 0.5rem;
+    }
+  }
+
   @keyframes thinking-chip-sheen {
     0% {
       transform: translateX(-132%);

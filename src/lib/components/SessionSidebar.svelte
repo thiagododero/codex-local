@@ -1059,7 +1059,7 @@
   });
 </script>
 
-<aside class="sidebar flex h-full w-full min-w-0 flex-col border-r border-gray-200/50 bg-gray-50/80 transition-all">
+<aside class="codex-session-sidebar sidebar flex h-full w-full min-w-0 flex-col border-r border-gray-200/50 bg-gray-50/80 transition-all">
   <div class="p-4 flex flex-col gap-4">
     <div class="relative flex items-center justify-between">
       <div class="flex items-center gap-2 px-1">
@@ -1158,7 +1158,7 @@
     </div>
 
       <button 
-      class={`flex w-full items-center gap-2 rounded-xl border px-4 py-3 shadow-sm transition-all group ${
+      class={`codex-session-sidebar__new-thread flex w-full items-center gap-2 rounded-xl border px-4 py-3 shadow-sm transition-all group ${
         readOnly
           ? "cursor-not-allowed border-gray-200 bg-gray-100/90 text-gray-400 opacity-70"
           : "bg-white border-gray-200 hover:border-amber-500/50 hover:shadow-md"
@@ -1627,9 +1627,10 @@
       {#each sessions as session (`${session.profileId ?? ""}:${session.id}`)}
         <div class="group relative" data-session-id={session.id}>
           <button
-            class={`w-full rounded-xl p-3 text-left transition-all relative ${
+            class={`codex-session-sidebar__session w-full rounded-xl p-3 text-left transition-all relative ${
               session.id === selectedId ? "bg-white shadow-sm border border-gray-200 ring-1 ring-gray-200/50" : sessionCardHighlightClass(session.id)
             }`}
+            data-active={session.id === selectedId}
             onclick={() => onSelect(session.id, session.profileId ?? null)}
             type="button"
           >
@@ -2390,6 +2391,46 @@
 </aside>
 
 <style>
+  .codex-session-sidebar {
+    background: var(--bg-sidebar) !important;
+    border-color: var(--line) !important;
+  }
+
+  .codex-session-sidebar__new-thread {
+    border-color: var(--line) !important;
+    background: var(--panel-strong) !important;
+    color: var(--ink-strong) !important;
+    box-shadow: none !important;
+  }
+
+  .codex-session-sidebar__new-thread:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--accent) 42%, var(--line)) !important;
+    background: color-mix(in srgb, var(--accent) 6%, var(--panel-strong)) !important;
+  }
+
+  .codex-session-sidebar__session {
+    border: 1px solid transparent !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .codex-session-sidebar__session:hover,
+  .codex-session-sidebar__session:focus-visible {
+    background: color-mix(in srgb, var(--panel-strong) 72%, var(--accent)) !important;
+    border-color: color-mix(in srgb, var(--accent) 16%, var(--line)) !important;
+  }
+
+  .codex-session-sidebar__session[data-active="true"] {
+    background: var(--panel-strong) !important;
+    border-color: color-mix(in srgb, var(--accent) 36%, var(--line)) !important;
+    box-shadow: inset 2px 0 0 var(--accent) !important;
+  }
+
+  .codex-session-sidebar__session[data-active="true"] .text-gray-900,
+  .codex-session-sidebar__session:hover .text-gray-900 {
+    color: var(--ink-strong) !important;
+  }
+
   :global(.scrollbar-thin::-webkit-scrollbar) {
     width: 4px;
   }
