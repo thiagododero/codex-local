@@ -1,37 +1,79 @@
-# Codex Local v3 · prueba Mac segura
+# Codex Local v3
 
-Esta rama usa **Codex app-server real** como agente y Ollama como proveedor local.
+Codex Local usa **Codex app-server real** y modelos gratuitos de Ollama.
 
-## Seguridad por defecto
+## Inicio automático
 
-El launcher arranca en modo conservador:
+`ABRIR.command`:
 
-- servidor sólo en `127.0.0.1`;
-- `workspace-write`, no `danger-full-access`;
-- aprobaciones `on-request`, no `never`;
-- red del sandbox desactivada por defecto;
-- `FORCE_YOLO` desactivado;
-- cookies `SameSite=Strict`;
-- mutaciones HTTP requieren `Origin`;
-- acciones de terminal/runtime requieren rol owner;
-- sólo se expone una carpeta de proyectos, no todo el home;
-- los datos de Codex Local viven separados de `~/.codex`.
+- detecta Codex dentro de ChatGPT.app, Codex.app o PATH;
+- inicia Ollama si hace falta;
+- detecta automáticamente `qwen3.5:9b` y `gpt-oss:20b`;
+- usa Qwen 3.5 9B como preferido en esta Mac cuando está instalado;
+- muestra sólo los modelos locales detectados en el selector de la interfaz;
+- mantiene un `CODEX_HOME` aislado del Codex normal;
+- abre el servidor únicamente en `127.0.0.1`;
+- genera login y secreto de sesión aleatorios;
+- permite dos app-server de Codex simultáneos.
 
-Si existe `~/Desktop/PROYECTOS`, se usa como raíz permitida. Si no, el primer inicio te pide elegir una carpeta.
+## Potencia del agente
 
-El modo Full Access sigue disponible en la interfaz para una sesión concreta si alguna tarea realmente lo necesita, pero ya no se fuerza globalmente.
+La seguridad externa de la aplicación y los permisos del agente son cosas separadas.
+
+La app mantiene localhost, login, cookies estrictas y control de Origin incluso cuando el agente está en modo máximo.
+
+Desde **Security & Session** podés controlar:
+
+- Full Access;
+- confirmaciones;
+- auto-aprobación de la sesión;
+- acceso a Internet.
+
+El botón **TODO AL PALO** activa:
+
+- `danger-full-access`;
+- `approval_policy = "never"`;
+- auto-aprobación de sesión;
+- red habilitada.
+
+**Modo seguro** vuelve a:
+
+- `workspace-write`;
+- `approval_policy = "on-request"`;
+- aprobación manual;
+- red deshabilitada.
+
+También podés escribir en el chat:
+
+- `/max` — potencia máxima para la sesión;
+- `/safe` — vuelve al modo seguro;
+- `/power` — abre el panel de permisos.
+
+Los ajustes predeterminados para chats nuevos están también en **Settings → Session defaults**.
+
+## Persistencia
+
+La primera ejecución de esta versión migra configuraciones anteriores inseguras a los valores protegidos y deja un backup de `config.toml`.
+
+Después de esa migración, los cambios que hagas desde la interfaz se conservan entre reinicios.
+
+Los datos viven en:
+
+`~/Library/Application Support/Codex Local v3/`
+
+No modifica `~/.codex/config.toml`.
 
 ## Antes de abrir
 
-Ejecutá primero `VERIFICAR.command`. Comprueba los SHA-256 de los archivos contra el manifiesto generado durante el build.
+Ejecutá `VERIFICAR.command` para validar los SHA-256 del paquete.
 
-macOS puede mostrar un aviso de Gatekeeper porque este build de prueba no está notarizado con un certificado Apple Developer ID. Eso es distinto de que el archivo sea malware. Para eliminar ese aviso de forma correcta necesitaremos firmar y notarizar una release futura.
+Este build de prueba todavía no está notarizado con Apple Developer ID, por lo que Gatekeeper puede mostrar un aviso la primera vez.
 
-## Probar
+## Archivos
 
-1. Descomprimí el artifact de **Build Mac Test Package**.
-2. Ejecutá `VERIFICAR.command`.
-3. Doble clic en `ABRIR.command`.
-4. Si aparece login, pegá con ⌘V: la contraseña local queda copiada al portapapeles.
-5. `CAMBIAR_CARPETA.command` cambia la única raíz visible para la app.
-6. `CERRAR.command` detiene el servidor.
+- `ABRIR.command`: inicia Codex Local.
+- `CERRAR.command`: detiene el backend.
+- `CAMBIAR_CARPETA.command`: cambia la carpeta principal visible en la interfaz.
+- `VERIFICAR.command`: comprueba integridad.
+- `BUILD_INFO.txt`: commit y workflow de origen.
+- `SHA256SUMS.txt`: hashes del contenido.
