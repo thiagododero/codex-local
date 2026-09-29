@@ -197,3 +197,33 @@ Respond to direct local-use feedback: Codex Local should not ask for a password 
 
 ### Next step
 Push `35b3c8d` and this context update, verify CI and the Mac packaging workflow, then prepare a visual-reference comparison for a user-reviewed redesign direction.
+
+---
+
+## 2026-09-29 — Compact developer workspace shell
+
+### Objective
+Start the replacement UI direction after the first visual pass was rejected: prioritize coding-workspace hierarchy over decorative palette changes.
+
+### Changes made
+- Reviewed OpenCode/OpenChamber/Codex WebUI patterns as interaction references only; no source code or assets were copied.
+- Reduced turn gaps from 48 px to 24 px and transcript/card spacing to make the conversation read as continuous work.
+- Widened the work canvas and centered the composer dock within it.
+- Added a compact, semantic shell for the transcript, composer, keyboard focus, active session rail, and sidebar interaction states.
+- Preserved the current theme tokens, runtime, permissions, localhost constraints, and all existing actions.
+
+### Relevant commit
+- `4b9ee8d` — `feat(ui): establish compact developer workspace shell`
+
+### Validation
+- `pnpm check`: passed with 0 errors and 0 warnings.
+- Production static build and `node scripts/verify-static-build.mjs`: passed.
+- Relaunched the local package and visually inspected both narrow and desktop layouts; passwordless local access still returned authenticated admin status.
+- CI and Build Mac for `83e011b` completed successfully before this block. CI/package for `4b9ee8d` are pending after push.
+
+### Manual validation pending
+- Test the unmodified Apple Silicon artifact for this commit.
+- Review the redesigned shell at 375 px, 768 px, 1024 px, and 1440 px, including keyboard focus and the mobile drawer.
+
+### Next step
+Push the compact-shell baseline, verify its Actions, then simplify inherited header/sidebar controls and add work panels only when the user opens them.

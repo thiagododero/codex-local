@@ -12,7 +12,7 @@
 - Active PR: **#1 — Codex Local v3: Ollama + Mac one-click test package**
 - PR state: **Draft**
 - Merge policy for this workstream: **do not merge until the current Mac package is validated on the real Mac**.
-- Current application-code head: `35b3c8d` — `fix(local): remove login gate and redundant rollback panel`.
+- Current application-code head: `4b9ee8d` — `feat(ui): establish compact developer workspace shell`.
 
 ## Validation status
 
@@ -52,11 +52,20 @@ The first midnight/indigo UI baseline from `ddcadde` was reviewed locally and re
 - **Not user-confirmed as a physical Mac test:** this is an agent-run local smoke test, not a confirmation of the downloadable ZIP by the user.
 - **Local limitation:** this shell has no `cargo`; `node scripts/verify-security-regressions.mjs` stops at `cargo fmt --check`. GitHub Actions remains the authoritative native/security validation until Rust is installed locally.
 
+### Current UI redesign baseline (pending CI/package)
+
+`4b9ee8d` begins the replacement direction after comparison with OpenCode/OpenChamber/Codex WebUI patterns: a compact developer workspace rather than a card-heavy chat page. It reduces transcript turn spacing, widens the readable work canvas, treats turns as a continuous work stream, makes the composer a centered primary control, and turns the active session into a restrained rail state. It uses existing semantic tokens and deliberately avoids importing third-party code/assets or adding a new brand palette.
+
+- **Implemented and locally rendered:** yes.
+- **Local checks:** `pnpm check` and static build verification passed.
+- **Not yet CI/build validated:** results for `4b9ee8d` are pending after push.
+- **Still incomplete by design:** inherited controls and panels need a second simplification pass; do not call the overall UI redesign finished.
+
 ## Current objective
 
 Deliver **Codex Local v3** for macOS Apple Silicon using the real Codex app-server with free local Ollama models, while keeping its state isolated from normal Codex usage.
 
-The immediate workstream is a product-UI redesign based on an evidence-backed comparison of mature open-source coding-agent interfaces. Do not start another broad visual pass until the reference patterns and a concrete information architecture are reviewed; the runtime, session isolation, localhost security controls, and permissions model remain unchanged.
+The immediate workstream is a product-UI redesign based on an evidence-backed comparison of mature open-source coding-agent interfaces. The next pass simplifies inherited controls and introduces work panels only on demand; the runtime, session isolation, localhost security controls, and permissions model remain unchanged.
 
 ## Implemented and expected to work
 
