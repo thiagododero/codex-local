@@ -4598,9 +4598,7 @@
     let turnId = initialTurnId;
     const recordHeight = (entry?: ResizeObserverEntry) => {
       const borderBoxSize = entry?.borderBoxSize;
-      const nextHeight = Array.isArray(borderBoxSize)
-        ? borderBoxSize[0]?.blockSize
-        : borderBoxSize?.blockSize;
+      const nextHeight = borderBoxSize?.[0]?.blockSize;
       queueTranscriptTurnMeasurement(turnId, nextHeight ?? node.getBoundingClientRect().height);
     };
     const observer =
@@ -14617,7 +14615,7 @@
     {/if}
   </div>
 {:else}
-<div class="flex h-[100dvh] min-h-[100dvh] w-full bg-white overflow-hidden font-sans text-gray-900" data-testid="workspace-shell">
+<div class="codex-local-shell flex h-[100dvh] min-h-[100dvh] w-full bg-white overflow-hidden font-sans text-gray-900" data-testid="workspace-shell">
   {#if showConnectionSnackbar || feedbackSnackbar}
     <div class="workspace-snackbar-stack pointer-events-none fixed inset-x-0 z-[110] flex justify-center px-3 sm:px-6">
       <div class="flex w-full max-w-xl flex-col gap-2">
@@ -14685,7 +14683,7 @@
   <aside
     class:hidden={!mobileSidebarOpen && isMobileLayout}
     class={[
-      "h-full border-r border-gray-200 transition-all duration-300",
+      "codex-local-sidebar-frame h-full border-r border-gray-200 transition-all duration-300",
       isMobileLayout
         ? "fixed inset-y-0 left-0 z-[130] w-[min(22rem,calc(100vw-1.5rem))] max-w-[calc(100vw-1.5rem)] shadow-2xl"
         : "w-[22rem] min-w-[22rem] max-w-[24rem] flex-shrink-0"
@@ -14851,7 +14849,7 @@
   </aside>
 
   <!-- Main Content -->
-  <main class="flex-1 flex flex-col h-full min-w-0 bg-white relative">
+  <main class="codex-local-main flex-1 flex flex-col h-full min-w-0 bg-white relative">
     <WorkspaceHeader
       activeWorkspaceTabId={activeWorkspaceTabId}
       bind:searchTriggerElement={sessionTurnSearchTriggerElement}
@@ -14960,14 +14958,14 @@
         </div>
       {/if}
       {#if activeWorkspaceTabId === "chat"}
-        <div class="h-full flex flex-col relative bg-white">
+        <div class="codex-local-chat h-full flex flex-col relative bg-white">
           <div
             bind:this={transcriptElement}
             class="chat-transcript flex-1 overflow-y-auto pt-8 pb-8"
             onscroll={handleTranscriptScroll}
             style={`padding-bottom: calc(${transcriptDockReservePx}px + env(safe-area-inset-bottom));`}
           >
-            <div bind:this={transcriptContentElement} class="max-w-3xl mx-auto px-6 space-y-12">
+            <div bind:this={transcriptContentElement} class="codex-local-transcript max-w-3xl mx-auto px-6 space-y-12">
               {#if loading || (loadingDetail && !conversation)}
                 <div class="space-y-6 animate-pulse mt-8">
                   <div class="h-4 bg-gray-100 rounded w-1/3"></div>
@@ -15813,7 +15811,7 @@
                     {/if}
                   </div>
                 {/if}
-                <form bind:this={composerPanelElement} class="composer-panel bg-white/95 border-2 border-gray-200 rounded-2xl shadow-2xl overflow-hidden transition-all duration-200 focus-within:-translate-y-0.5 focus-within:border-amber-400/70 focus-within:bg-white focus-within:shadow-[0_24px_60px_-34px_rgba(245,158,11,0.65)]" onsubmit={(event) => { event.preventDefault(); void submitComposer(); }}>
+                <form bind:this={composerPanelElement} class="codex-local-composer composer-panel bg-white/95 border-2 border-gray-200 rounded-2xl shadow-2xl overflow-hidden transition-all duration-200 focus-within:-translate-y-0.5 focus-within:border-amber-400/70 focus-within:bg-white focus-within:shadow-[0_24px_60px_-34px_rgba(245,158,11,0.65)]" onsubmit={(event) => { event.preventDefault(); void submitComposer(); }}>
                   <textarea bind:this={composerTextareaElement} bind:value={draft} class="composer-textarea w-full min-h-[3rem] overflow-y-hidden border-none bg-transparent px-4 py-3 pr-12 text-sm leading-6 text-gray-800 placeholder-gray-400 outline-none transition-colors duration-150 focus:outline-none focus:ring-0 focus:placeholder:text-amber-500/70 resize-none sm:min-h-[3.25rem]" oninput={handleComposerInput} onkeydown={handleComposerKeydown} placeholder={composerQueueModeActive ? ui.queueFollowUpPlaceholder : ui.askCodex} readonly={readOnlyRole} rows="1"></textarea>
                   
                   {#if draftAttachments.length > 0}
@@ -16808,6 +16806,97 @@
 {/if}
 
 <style>
+  /* Visual system: an intentional local coding workstation. */
+  .codex-local-shell {
+    background:
+      radial-gradient(circle at 68% -24%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 34rem),
+      var(--bg) !important;
+    color: var(--ink-strong) !important;
+  }
+
+  .codex-local-sidebar-frame {
+    border-color: color-mix(in srgb, var(--line) 84%, transparent) !important;
+  }
+
+  .codex-local-main,
+  .codex-local-chat {
+    background:
+      radial-gradient(circle at 74% 0%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 31rem),
+      var(--bg) !important;
+  }
+
+  .codex-local-transcript {
+    max-width: 60rem !important;
+    padding-inline: clamp(1rem, 3vw, 2.5rem) !important;
+  }
+
+  .codex-local-composer {
+    border-color: color-mix(in srgb, var(--line) 86%, transparent) !important;
+    background: color-mix(in srgb, var(--panel-strong) 94%, transparent) !important;
+    box-shadow:
+      0 28px 68px -42px rgba(15, 23, 42, 0.48),
+      inset 0 1px 0 color-mix(in srgb, white 26%, transparent) !important;
+  }
+
+  .codex-local-composer:focus-within {
+    border-color: color-mix(in srgb, var(--accent) 72%, var(--line)) !important;
+    background: var(--panel-strong) !important;
+    box-shadow:
+      0 28px 68px -40px color-mix(in srgb, var(--accent) 40%, transparent),
+      inset 0 1px 0 color-mix(in srgb, white 24%, transparent) !important;
+  }
+
+  .codex-local-composer .composer-toolbar {
+    border-color: color-mix(in srgb, var(--line) 74%, transparent) !important;
+    background: color-mix(in srgb, var(--panel-soft) 82%, var(--panel-strong)) !important;
+  }
+
+  .codex-local-composer .surface-contrast-button {
+    border: 1px solid color-mix(in srgb, var(--accent) 65%, transparent) !important;
+    background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 64%, #2c256d)) !important;
+    box-shadow: 0 14px 28px -18px color-mix(in srgb, var(--accent) 68%, transparent) !important;
+  }
+
+  .codex-local-composer .surface-contrast-button:hover:not(:disabled) {
+    filter: brightness(1.08);
+  }
+
+  .chat-transcript {
+    scroll-padding-top: 5rem;
+    scroll-padding-bottom: 14rem;
+  }
+
+  :global(.codex-local-shell button:focus-visible),
+  :global(.codex-local-shell input:focus-visible),
+  :global(.codex-local-shell select:focus-visible),
+  :global(.codex-local-shell textarea:focus-visible) {
+    outline: 2px solid var(--accent) !important;
+    outline-offset: 2px;
+  }
+
+  :global(:root[data-theme="dark"]) .codex-local-main .bg-white,
+  :global(:root[data-theme="dark"]) .codex-local-main .bg-gray-50,
+  :global(:root[data-theme="dark"]) .codex-local-main .bg-gray-100 {
+    background-color: var(--panel-strong) !important;
+  }
+
+  :global(:root[data-theme="dark"]) .codex-local-main .border-gray-100,
+  :global(:root[data-theme="dark"]) .codex-local-main .border-gray-200 {
+    border-color: color-mix(in srgb, var(--line) 84%, transparent) !important;
+  }
+
+  :global(:root[data-theme="dark"]) .codex-local-main .text-gray-900,
+  :global(:root[data-theme="dark"]) .codex-local-main .text-gray-800,
+  :global(:root[data-theme="dark"]) .codex-local-main .text-gray-700 {
+    color: var(--ink-strong) !important;
+  }
+
+  :global(:root[data-theme="dark"]) .codex-local-main .text-gray-600,
+  :global(:root[data-theme="dark"]) .codex-local-main .text-gray-500,
+  :global(:root[data-theme="dark"]) .codex-local-main .text-gray-400 {
+    color: var(--muted) !important;
+  }
+
   @keyframes thinking-chip-sheen {
     0% {
       transform: translateX(-132%);
