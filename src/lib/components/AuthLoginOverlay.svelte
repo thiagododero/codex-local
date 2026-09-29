@@ -50,7 +50,7 @@
   <div class="auth-dialog-card w-full max-w-xl rounded-[2rem] border border-white/70 bg-white/92 p-6 shadow-[0_32px_90px_rgba(15,23,42,0.24)] backdrop-blur-2xl sm:p-8">
     <div class="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
       <div class="space-y-3">
-        <p class="text-[11px] font-bold uppercase tracking-[0.28em] text-amber-700">{ui.privateGateway}</p>
+        <p class="text-[11px] font-bold uppercase tracking-[0.28em] text-emerald-600">{ui.privateGateway}</p>
         <div>
           <h1 class="text-3xl font-semibold tracking-tight text-gray-950 sm:text-4xl">{ui.appTitle}</h1>
           <p class="mt-3 max-w-md text-sm leading-7 text-gray-500">{ui.loginLede}</p>
@@ -61,7 +61,7 @@
         <div class="relative">
           <select
             aria-label={ui.language}
-            class="auth-dialog-select w-full appearance-none rounded-2xl border border-gray-200 bg-white px-3.5 py-2.5 pr-9 text-sm font-semibold text-gray-700 shadow-sm outline-none transition focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
+            class="auth-dialog-select w-full appearance-none rounded-2xl border border-gray-200 bg-white px-3.5 py-2.5 pr-9 text-sm font-semibold text-gray-700 shadow-sm outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10"
             onchange={(event) => onLocaleChange((event.currentTarget as HTMLSelectElement).value)}
             value={activeLocale}
           >
@@ -89,7 +89,7 @@
         <input
           bind:value={loginPassword}
           autocomplete="current-password"
-          class="auth-dialog-input w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm outline-none transition focus:border-amber-500 focus:ring-4 focus:ring-amber-100"
+          class="auth-dialog-input w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm outline-none transition focus:border-amber-500 focus:ring-4 focus:ring-emerald-500/10"
           data-testid="login-password"
           placeholder={ui.password}
           type="password"
