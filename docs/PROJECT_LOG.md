@@ -58,3 +58,37 @@ The code candidate at `207adbf` passed CI and the Apple Silicon packaging workfl
 
 ### Next step
 Download/test Build Mac #31 on the target Mac and append the exact pass/fail results here. Update `PROJECT_CONTEXT.md` after the test.
+
+---
+
+## 2026-09-29 — Local checkout startup smoke test
+
+### Objective
+Open the current Codex Local v3 worktree on the target Apple Silicon Mac so development can continue against a running local instance.
+
+### Changes made
+- Installed the lockfile dependencies locally.
+- Built the frontend static bundle from `c2bbc83`.
+- The local machine did not have Rust/Cargo on `PATH`, so a fresh gateway binary could not be compiled from source there.
+- Used the Apple Silicon backend from the existing verified Build Mac #31 artifact (`207adbf`); the only later commit, `c2bbc83`, adds continuity documentation.
+- Assembled the development-only launcher layout under ignored `dist/local-package/` and opened it with `ABRIR.command`.
+
+### Relevant commits
+- `207adbf` — application candidate contained in Build Mac #31.
+- `c2bbc83` — current branch head; continuity documentation only.
+
+### Validation performed and result
+- Local launcher started the private gateway on `127.0.0.1:4173`.
+- `GET /healthz` returned `{"instanceTokenMatched":false,"status":"ok"}`.
+- Chrome visibly loaded Codex Local, an existing Local · Ollama session, and the `Qwen 3.5 9B · Local` model selector.
+
+### Known issues or uncertainty
+- This was a startup/UI smoke test of a local development assembly, not an end-to-end validation of the downloaded ZIP.
+- Rust/Cargo is unavailable on this Mac's current shell `PATH`, so the native gateway was not rebuilt locally from source.
+- `VERIFICAR.command`, clean extracted-package startup, stale-session/build behavior, and `/max`, `/safe`, `/power` controls still require manual validation.
+
+### Current state
+Codex Local is running locally from the checkout-derived development package. No application-code change was made in this block.
+
+### Next step
+Run the complete real-package checklist against the unmodified Build Mac #31 artifact, then record the exact results before considering a merge.

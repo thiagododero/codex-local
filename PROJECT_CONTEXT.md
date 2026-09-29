@@ -29,6 +29,17 @@ As of 2026-09-29:
 
 **Important distinction:** CI and packaging are green, but the package has **not yet been recorded here as manually validated on the real Mac**. Do not describe the release candidate as fully validated until that manual check is completed and logged.
 
+### Partial local-Mac smoke test
+
+On 2026-09-29, the application was opened successfully on the target Apple Silicon Mac from a local development package assembled in the checkout:
+
+- frontend static files built from `c2bbc83`;
+- Apple Silicon backend extracted from the verified Build Mac #31 artifact for application commit `207adbf` (the commits differ only by continuity documentation);
+- `GET /healthz` returned `status: ok`;
+- Chrome rendered the Codex Local workspace, an existing Local · Ollama session, and the `Qwen 3.5 9B · Local` selector.
+
+This is **physical-Mac validation of startup and basic UI availability only**. It is not a verification of the downloadable ZIP itself: `VERIFICAR.command`, clean-package launch, stale-build/session behavior, and the permission-control flows remain pending.
+
 ## Current objective
 
 Deliver **Codex Local v3** for macOS Apple Silicon using the real Codex app-server with free local Ollama models, while keeping its state isolated from normal Codex usage.
@@ -92,8 +103,8 @@ Manually test the artifact produced by Build Mac #31 on the target Mac.
 
 Suggested validation sequence:
 
-1. Run `VERIFICAR.command`.
-2. Launch with `ABRIR.command`.
+1. Download the unmodified artifact and run `VERIFICAR.command`.
+2. Launch that package with `ABRIR.command`.
 3. Confirm installed Ollama models are detected automatically.
 4. Confirm an older/stale session does not remain bound to a missing model.
 5. Close with `CERRAR.command` and launch again.
