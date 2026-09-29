@@ -1059,12 +1059,12 @@
   });
 </script>
 
-<aside class="codex-local-sidebar sidebar flex h-full w-full min-w-0 flex-col border-r border-gray-200/50 bg-gray-50/80 transition-all">
+<aside class="sidebar flex h-full w-full min-w-0 flex-col border-r border-gray-200/50 bg-gray-50/80 transition-all">
   <div class="p-4 flex flex-col gap-4">
     <div class="relative flex items-center justify-between">
       <div class="flex items-center gap-2 px-1">
-        <div class="codex-local-mark w-8 h-8 bg-gray-950 rounded-lg flex items-center justify-center text-white font-bold shadow-sm">C</div>
-        <h1 class="codex-local-brand-name text-lg font-semibold tracking-tight text-gray-900">{ui.appShortName}</h1>
+        <div class="w-8 h-8 bg-gray-950 rounded-lg flex items-center justify-center text-white font-bold shadow-sm">C</div>
+        <h1 class="text-lg font-semibold tracking-tight text-gray-900">{ui.appShortName}</h1>
       </div>
       <div class="flex items-center gap-1.5">
         <button
@@ -1158,7 +1158,7 @@
     </div>
 
       <button 
-      class={`codex-local-new-thread flex w-full items-center gap-2 rounded-xl border px-4 py-3 shadow-sm transition-all group ${
+      class={`flex w-full items-center gap-2 rounded-xl border px-4 py-3 shadow-sm transition-all group ${
         readOnly
           ? "cursor-not-allowed border-gray-200 bg-gray-100/90 text-gray-400 opacity-70"
           : "bg-white border-gray-200 hover:border-amber-500/50 hover:shadow-md"
@@ -1627,10 +1627,9 @@
       {#each sessions as session (`${session.profileId ?? ""}:${session.id}`)}
         <div class="group relative" data-session-id={session.id}>
           <button
-            class={`codex-local-session w-full rounded-xl p-3 text-left transition-all relative ${
+            class={`w-full rounded-xl p-3 text-left transition-all relative ${
               session.id === selectedId ? "bg-white shadow-sm border border-gray-200 ring-1 ring-gray-200/50" : sessionCardHighlightClass(session.id)
             }`}
-            data-active={session.id === selectedId}
             onclick={() => onSelect(session.id, session.profileId ?? null)}
             type="button"
           >
@@ -1828,7 +1827,7 @@
     </div>
   </div>
 
-  <div class="codex-local-account-footer p-4 border-t border-gray-200/50 bg-gray-50/50">
+  <div class="p-4 border-t border-gray-200/50 bg-gray-50/50">
     <button
       aria-expanded={accountMenuOpen}
       bind:this={accountButtonElement}
@@ -2403,101 +2402,6 @@
   }
   :global(.scrollbar-thin:hover::-webkit-scrollbar-thumb) {
     background: var(--scrollbar-thumb-hover);
-  }
-
-  /* Codex Local is a workstation, not a stack of generic cards. */
-  .codex-local-sidebar {
-    background:
-      radial-gradient(circle at 12% -8%, color-mix(in srgb, var(--accent) 13%, transparent), transparent 28rem),
-      linear-gradient(180deg, color-mix(in srgb, var(--bg-sidebar) 96%, var(--panel-strong)), var(--bg-sidebar)) !important;
-    border-color: color-mix(in srgb, var(--line) 84%, transparent) !important;
-  }
-
-  .codex-local-mark {
-    background:
-      radial-gradient(circle at 28% 20%, rgba(255, 255, 255, 0.3), transparent 34%),
-      linear-gradient(145deg, var(--accent), color-mix(in srgb, var(--accent) 48%, #16223b)) !important;
-    border: 1px solid color-mix(in srgb, var(--accent) 70%, white 20%);
-    border-radius: 0.7rem !important;
-    box-shadow: 0 10px 28px -14px color-mix(in srgb, var(--accent) 72%, transparent) !important;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    letter-spacing: -0.08em;
-  }
-
-  .codex-local-brand-name {
-    color: var(--ink-strong) !important;
-    font-size: 0.98rem !important;
-    font-weight: 730 !important;
-    letter-spacing: -0.035em !important;
-  }
-
-  .codex-local-new-thread {
-    border-color: color-mix(in srgb, var(--accent) 26%, var(--line)) !important;
-    background: color-mix(in srgb, var(--panel-strong) 88%, var(--accent)) !important;
-    color: var(--ink-strong) !important;
-    box-shadow: 0 14px 28px -24px color-mix(in srgb, var(--accent) 72%, transparent) !important;
-  }
-
-  .codex-local-new-thread:hover:not(:disabled) {
-    border-color: color-mix(in srgb, var(--accent) 58%, var(--line)) !important;
-    background: color-mix(in srgb, var(--panel-strong) 80%, var(--accent)) !important;
-  }
-
-  .codex-local-new-thread > div {
-    background: color-mix(in srgb, var(--accent) 13%, transparent) !important;
-    color: var(--accent) !important;
-  }
-
-  .codex-local-new-thread span {
-    color: var(--ink-strong) !important;
-  }
-
-  .codex-local-session {
-    border: 1px solid transparent !important;
-    background: transparent !important;
-    box-shadow: none !important;
-  }
-
-  .codex-local-session:hover,
-  .codex-local-session:focus-visible {
-    background: color-mix(in srgb, var(--panel-strong) 58%, var(--accent)) !important;
-    border-color: color-mix(in srgb, var(--accent) 18%, var(--line)) !important;
-  }
-
-  .codex-local-session[data-active="true"] {
-    background: linear-gradient(135deg, color-mix(in srgb, var(--panel-strong) 86%, var(--accent)), var(--panel-strong)) !important;
-    border-color: color-mix(in srgb, var(--accent) 42%, var(--line)) !important;
-    box-shadow:
-      0 14px 26px -24px rgba(15, 23, 42, 0.6),
-      inset 3px 0 0 var(--accent) !important;
-  }
-
-  .codex-local-session[data-active="true"] .text-gray-900,
-  .codex-local-session:hover .text-gray-900 {
-    color: var(--ink-strong) !important;
-  }
-
-  .codex-local-account-footer {
-    border-color: color-mix(in srgb, var(--line) 72%, transparent) !important;
-    background: color-mix(in srgb, var(--bg-sidebar) 82%, var(--panel-strong)) !important;
-  }
-
-  :global(:root[data-theme="dark"]) .codex-local-sidebar .text-gray-900,
-  :global(:root[data-theme="dark"]) .codex-local-sidebar .text-gray-800,
-  :global(:root[data-theme="dark"]) .codex-local-sidebar .text-gray-700 {
-    color: var(--ink-strong) !important;
-  }
-
-  :global(:root[data-theme="dark"]) .codex-local-sidebar .text-gray-600,
-  :global(:root[data-theme="dark"]) .codex-local-sidebar .text-gray-500,
-  :global(:root[data-theme="dark"]) .codex-local-sidebar .text-gray-400 {
-    color: var(--muted) !important;
-  }
-
-  :global(:root[data-theme="dark"]) .codex-local-sidebar .bg-white,
-  :global(:root[data-theme="dark"]) .codex-local-sidebar .bg-gray-50,
-  :global(:root[data-theme="dark"]) .codex-local-sidebar .bg-gray-100 {
-    background-color: color-mix(in srgb, var(--panel-soft) 88%, var(--bg-sidebar)) !important;
   }
 
   .sidebar-flyout {

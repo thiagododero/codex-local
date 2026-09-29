@@ -19,28 +19,28 @@ export type ThemeSettings = Record<ThemeSurface, ThemePalette>;
 
 export const DEFAULT_THEME_SETTINGS: ThemeSettings = {
   light: {
-    bg: "#f5f7fb",
-    bgSidebar: "#eef2f8",
-    bgAccent: "#e7edff",
+    bg: "#f7f7f8",
+    bgSidebar: "#f1f1f2",
+    bgAccent: "#ececed",
     panelStrong: "#ffffff",
-    panelSoft: "#f7f9fd",
-    inkStrong: "#172033",
-    ink: "#3d4b63",
-    muted: "#68748b",
-    accent: "#6256e8",
-    line: "#dbe2ee"
+    panelSoft: "#f7f7f8",
+    inkStrong: "#171717",
+    ink: "#404040",
+    muted: "#737373",
+    accent: "#0f9f7f",
+    line: "#e5e5e5"
   },
   dark: {
-    bg: "#080d18",
-    bgSidebar: "#0c1322",
-    bgAccent: "#111b31",
-    panelStrong: "#111a2b",
-    panelSoft: "#0e1626",
-    inkStrong: "#f3f6ff",
-    ink: "#c8d2e6",
-    muted: "#8f9bb3",
-    accent: "#9186ff",
-    line: "#26334a"
+    bg: "#0f0f10",
+    bgSidebar: "#151516",
+    bgAccent: "#1d1d1f",
+    panelStrong: "#171718",
+    panelSoft: "#1c1c1e",
+    inkStrong: "#fafafa",
+    ink: "#d4d4d4",
+    muted: "#9a9a9a",
+    accent: "#34d399",
+    line: "#303033"
   }
 };
 

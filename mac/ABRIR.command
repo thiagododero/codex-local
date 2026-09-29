@@ -10,7 +10,6 @@ LOG_DIR="$SUPPORT_DIR/logs"
 MODEL_FILE="$SUPPORT_DIR/model.txt"
 PROJECT_ROOT_FILE="$SUPPORT_DIR/projects-root.txt"
 CONFIG_VERSION_FILE="$SUPPORT_DIR/config-version.txt"
-PASSWORD_FILE="$SUPPORT_DIR/ui-password.txt"
 SECRET_FILE="$SUPPORT_DIR/session-secret.txt"
 PID_FILE="$RUNTIME_DIR/backend.pid"
 RUNNING_BUILD_FILE="$RUNTIME_DIR/running-build.txt"
@@ -228,12 +227,6 @@ EOF
   fi
 fi
 
-if [[ ! -f "$PASSWORD_FILE" ]]; then
-  openssl rand -hex 16 > "$PASSWORD_FILE"
-  chmod 600 "$PASSWORD_FILE"
-fi
-UI_PASSWORD="$(cat "$PASSWORD_FILE" | tr -d '\r\n')"
-
 if [[ ! -f "$SECRET_FILE" ]]; then
   openssl rand -hex 32 > "$SECRET_FILE"
   chmod 600 "$SECRET_FILE"
@@ -253,7 +246,6 @@ if [[ -f "$PID_FILE" ]]; then
   OLD_PID="$(cat "$PID_FILE" 2>/dev/null || true)"
   if [[ -n "$OLD_PID" ]] && kill -0 "$OLD_PID" >/dev/null 2>&1; then
     if [[ -n "$PACKAGE_BUILD_COMMIT" && "$RUNNING_BUILD_COMMIT" == "$PACKAGE_BUILD_COMMIT" ]]; then
-      printf "%s" "$UI_PASSWORD" | pbcopy
       open "http://127.0.0.1:$PORT/"
       echo "✅ Esta misma build de Codex Local ya estaba ejecutándose."
       exit 0
@@ -303,10 +295,8 @@ echo "Iniciando Codex Local…"
     CODEX_WEBUI_ALLOWED_ROOTS="$PROJECT_ROOT" \
     CODEX_WEBUI_LOCAL_MODELS_JSON="$LOCAL_MODELS_JSON" \
     CODEX_WEBUI_DEFAULT_MODEL="$MODEL" \
-    CODEX_WEBUI_PASSWORD="$UI_PASSWORD" \
-    CODEX_WEBUI_OWNER_PASSWORD="$UI_PASSWORD" \
     CODEX_WEBUI_SESSION_SECRET="$SESSION_SECRET" \
-    CODEX_WEBUI_REQUIRE_OWNER="true" \
+    CODEX_WEBUI_REQUIRE_OWNER="false" \
     CODEX_WEBUI_REQUIRE_ORIGIN_HEADER="true" \
     CODEX_WEBUI_COOKIE_SAMESITE="strict" \
     CODEX_WEBUI_TRUST_PROXY_HEADERS="false" \
@@ -345,7 +335,6 @@ if ! curl -fsS --max-time 2 "http://127.0.0.1:$PORT/healthz" >/dev/null 2>&1; th
   exit 1
 fi
 
-printf "%s" "$UI_PASSWORD" | pbcopy
 open "http://127.0.0.1:$PORT/"
 
 echo ""
@@ -357,6 +346,6 @@ printf "%s\n" "$LOCAL_MODEL_NAMES" | sed 's/^/  • /'
 echo "Carpeta principal: $PROJECT_ROOT"
 echo "Servidor privado: 127.0.0.1:$PORT"
 echo ""
-echo "Password local copiada al portapapeles."
+echo "Acceso local sin contraseña: el gateway está limitado a 127.0.0.1 y exige Origin estricto."
 echo "Desde el chat: /max activa potencia máxima y /safe vuelve al modo protegido."
 sleep 3

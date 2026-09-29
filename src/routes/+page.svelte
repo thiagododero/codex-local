@@ -150,8 +150,6 @@
     SessionQueueItem,
     SessionQueuePayload,
     SessionReviewTarget,
-    SessionRollbackTarget,
-    SessionRollbackTargetsPayload,
     SessionRolloutRecoveryPayload,
     SessionSearchScope,
     SessionFolder,
@@ -404,12 +402,6 @@
   let resolvedTheme = $state<ResolvedTheme>("light");
   let loadingOlderTurns = $state(false);
   let olderTurnsAutoLoadEnabled = $state(true);
-  let rollbackTargetsOpen = $state(false);
-  let rollbackTargetsLoading = $state(false);
-  let rollbackTargetsPayload = $state<SessionRollbackTargetsPayload | null>(null);
-  let rollbackTargetsSessionId = $state<string | null>(null);
-  let rollbackTargetsError = $state("");
-  let rollbackTargetsResetSessionId = $state<string | null>(null);
   let olderTurnsAutoLoadPaused = $state(false);
   let olderTurnsAutoTriggerTimestamps = $state<number[]>([]);
   let terminals = $state<TerminalSummary[]>([]);
@@ -687,28 +679,6 @@
       handoffToNewThread: m.handoff_to_new_thread(),
       rollbackToThisTurn: m.rollback_to_this_turn(),
       rollbackConfirm: m.rollback_confirm(),
-      rollbackTargets:
-        locale === "ko"
-          ? "롤백 대상"
-          : locale === "ja"
-            ? "Rollback targets"
-            : locale === "zh-Hans"
-              ? "Rollback targets"
-              : locale === "zh-Hant"
-                ? "Rollback targets"
-                : "Rollback targets",
-      rollbackTargetsHint:
-        locale === "ko"
-          ? "되돌릴 기준 메시지를 선택합니다. 파일 변경 자체는 되돌리지 않습니다."
-          : "Choose the message to roll back to. File changes are not reverted.",
-      rollbackTargetsLoading:
-        locale === "ko"
-          ? "롤백 대상을 불러오는 중"
-          : "Loading rollback targets",
-      rollbackTargetsEmpty:
-        locale === "ko"
-          ? "되돌릴 수 있는 이전 메시지가 없습니다."
-          : "No earlier messages can be rolled back to.",
       rollbackPreviewIncomplete:
         locale === "ko"
           ? "일부 이전 턴은 아직 로드되지 않아 파일 변경 미리보기가 불완전할 수 있습니다."
@@ -12232,19 +12202,6 @@
     scheduleComposerTextareaResize();
   });
 
-  $effect(() => {
-    const sessionId = selectedSessionId;
-    if (rollbackTargetsResetSessionId === sessionId) {
-      return;
-    }
-    rollbackTargetsResetSessionId = sessionId;
-    rollbackTargetsOpen = false;
-    rollbackTargetsPayload = null;
-    rollbackTargetsSessionId = null;
-    rollbackTargetsError = "";
-    rollbackTargetsLoading = false;
-  });
-
   async function copyMessageText(text: string) {
     if (typeof navigator === "undefined" || !text.trim()) {
       return;
@@ -12300,106 +12257,6 @@
       }
     }
     return filePreviews;
-  }
-
-  async function loadRollbackTargets(force = false) {
-    const sessionId = selectedSessionId;
-    if (!sessionId) {
-      return;
-    }
-    if (!force && rollbackTargetsPayload && rollbackTargetsSessionId === sessionId) {
-      return;
-    }
-    rollbackTargetsLoading = true;
-    rollbackTargetsError = "";
-    try {
-      const payload = await api.listRollbackTargets(sessionId, profileIdForSession(sessionId));
-      if (selectedSessionId !== sessionId) {
-        return;
-      }
-      rollbackTargetsPayload = payload;
-      rollbackTargetsSessionId = sessionId;
-    } catch (error) {
-      if (selectedSessionId === sessionId) {
-        rollbackTargetsError = describeError(error);
-      }
-    } finally {
-      if (selectedSessionId === sessionId) {
-        rollbackTargetsLoading = false;
-      }
-    }
-  }
-
-  async function toggleRollbackTargetsPanel() {
-    rollbackTargetsOpen = !rollbackTargetsOpen;
-    if (rollbackTargetsOpen) {
-      await loadRollbackTargets();
-    }
-  }
-
-  async function rollbackCurrentThreadToTarget(target: SessionRollbackTarget) {
-    if (readOnlyRole) {
-      errorText = m.error_forbidden_role();
-      return;
-    }
-    if (!selectedSessionId || !conversation) {
-      return;
-    }
-    const numTurns = target.numTurns;
-    if (numTurns <= 0) {
-      noticeText = m.rollback_no_later_turns();
-      return;
-    }
-    const affectedTurns = getLoadedAffectedTurnsForRollback(numTurns);
-    const affectedFullyLoaded = affectedTurns.length === numTurns;
-    const previewLines = affectedTurns.slice(0, 6).map((turn, index) => `${index + 1}. ${summarizeTurnForRollbackPreview(turn)}`);
-    if (affectedTurns.length > previewLines.length) {
-      previewLines.push(`... +${affectedTurns.length - previewLines.length}`);
-    }
-    const filePreviews = getRollbackFilePreviews(affectedTurns);
-    const filePreviewLines = filePreviews.slice(0, 8).map((entry) => {
-      const stats = entry.added || entry.removed ? ` (+${entry.added}/-${entry.removed})` : "";
-      return `- ${entry.path}${stats}`;
-    });
-    if (filePreviews.length > filePreviewLines.length) {
-      filePreviewLines.push(`... +${filePreviews.length - filePreviewLines.length}`);
-    }
-    const affectedSection =
-      previewLines.length > 0
-        ? `\n\n${ui.rollbackTurnsCount} (${numTurns}):\n${previewLines.join("\n")}`
-        : `\n\n${ui.rollbackTurnsCount}: ${numTurns}`;
-    const incompleteSection = affectedFullyLoaded ? "" : `\n\n${ui.rollbackPreviewIncomplete}`;
-    const filePreviewSection =
-      filePreviews.length > 0
-        ? `\n\nFile changes in loaded affected turns (${filePreviews.length}):\n${filePreviewLines.join("\n")}`
-        : "\n\nFile changes in loaded affected turns: none";
-    const confirmMessage = `${ui.rollbackConfirm}\n\nTarget: ${target.preview}${affectedSection}${incompleteSection}${filePreviewSection}`;
-    if (!window.confirm(confirmMessage)) {
-      return;
-    }
-    const sessionId = selectedSessionId;
-    try {
-      const response = await api.rollbackSession(sessionId, numTurns, profileIdForSession(sessionId));
-      if (selectedSessionId === sessionId && conversation) {
-        conversation = normalizeConversationExecutionState({
-          ...conversation,
-          thread: {
-            ...conversation.thread,
-            ...response.thread
-          },
-          activeTurnId: null
-        });
-        applySessionSummaryUpdate(buildSessionSummaryFromConversation(conversation));
-      }
-      rollbackTargetsPayload = null;
-      rollbackTargetsSessionId = null;
-      rollbackTargetsOpen = false;
-      scheduleSessionRefresh(80);
-      scheduleSelectedSessionStateRefresh(sessionId, 80);
-      noticeText = m.rollback_complete();
-    } catch (error) {
-      errorText = describeError(error);
-    }
   }
 
   async function forkCurrentThread(
@@ -14615,7 +14472,7 @@
     {/if}
   </div>
 {:else}
-<div class="codex-local-shell flex h-[100dvh] min-h-[100dvh] w-full bg-white overflow-hidden font-sans text-gray-900" data-testid="workspace-shell">
+<div class="flex h-[100dvh] min-h-[100dvh] w-full bg-white overflow-hidden font-sans text-gray-900" data-testid="workspace-shell">
   {#if showConnectionSnackbar || feedbackSnackbar}
     <div class="workspace-snackbar-stack pointer-events-none fixed inset-x-0 z-[110] flex justify-center px-3 sm:px-6">
       <div class="flex w-full max-w-xl flex-col gap-2">
@@ -14683,7 +14540,7 @@
   <aside
     class:hidden={!mobileSidebarOpen && isMobileLayout}
     class={[
-      "codex-local-sidebar-frame h-full border-r border-gray-200 transition-all duration-300",
+      "h-full border-r border-gray-200 transition-all duration-300",
       isMobileLayout
         ? "fixed inset-y-0 left-0 z-[130] w-[min(22rem,calc(100vw-1.5rem))] max-w-[calc(100vw-1.5rem)] shadow-2xl"
         : "w-[22rem] min-w-[22rem] max-w-[24rem] flex-shrink-0"
@@ -14849,7 +14706,7 @@
   </aside>
 
   <!-- Main Content -->
-  <main class="codex-local-main flex-1 flex flex-col h-full min-w-0 bg-white relative">
+  <main class="flex-1 flex flex-col h-full min-w-0 bg-white relative">
     <WorkspaceHeader
       activeWorkspaceTabId={activeWorkspaceTabId}
       bind:searchTriggerElement={sessionTurnSearchTriggerElement}
@@ -14958,14 +14815,14 @@
         </div>
       {/if}
       {#if activeWorkspaceTabId === "chat"}
-        <div class="codex-local-chat h-full flex flex-col relative bg-white">
+        <div class="h-full flex flex-col relative bg-white">
           <div
             bind:this={transcriptElement}
             class="chat-transcript flex-1 overflow-y-auto pt-8 pb-8"
             onscroll={handleTranscriptScroll}
             style={`padding-bottom: calc(${transcriptDockReservePx}px + env(safe-area-inset-bottom));`}
           >
-            <div bind:this={transcriptContentElement} class="codex-local-transcript max-w-3xl mx-auto px-6 space-y-12">
+            <div bind:this={transcriptContentElement} class="max-w-3xl mx-auto px-6 space-y-12">
               {#if loading || (loadingDetail && !conversation)}
                 <div class="space-y-6 animate-pulse mt-8">
                   <div class="h-4 bg-gray-100 rounded w-1/3"></div>
@@ -15051,86 +14908,6 @@
                         </button>
                       </div>
                     </div>
-                  </div>
-                {/if}
-
-                {#if !readOnlyRole && selectedSessionId && (conversation?.thread.turns.length ?? 0) > 0 && (rollbackTargetsLoading || Boolean(rollbackTargetsError) || !rollbackTargetsPayload || rollbackTargetsPayload.targets.length > 0)}
-                  <div
-                    class="rounded-2xl border px-3 py-2 shadow-sm"
-                    style="border-color: var(--line); background: var(--panel-strong); color: var(--ink-strong);"
-                  >
-                    <div class="flex min-w-0 items-center justify-between gap-2">
-                      <button
-                        class="ui-animated-button ui-animated-button--soft flex min-w-0 flex-1 items-center gap-2 rounded-xl px-2 py-1.5 text-left text-xs font-bold"
-                        style="color: var(--ink-strong);"
-                        onclick={() => void toggleRollbackTargetsPanel()}
-                        type="button"
-                      >
-                        <RotateCcw size={14} class="shrink-0 text-red-500" />
-                        <span class="truncate">{ui.rollbackTargets}</span>
-                        {#if rollbackTargetsPayload?.targets}
-                          <span class="rounded-full px-1.5 py-0.5 text-[10px]" style="background: var(--panel-soft); color: var(--muted);">
-                            {rollbackTargetsPayload.targets.length}
-                          </span>
-                        {/if}
-                      </button>
-                      <button
-                        class="ui-animated-button ui-animated-button--soft rounded-lg px-2 py-1 text-[10px] font-bold disabled:opacity-50"
-                        disabled={rollbackTargetsLoading}
-                        onclick={() => void loadRollbackTargets(true)}
-                        style="color: var(--muted);"
-                        title={ui.refresh}
-                        type="button"
-                      >
-                        <RefreshCw size={12} class={rollbackTargetsLoading ? "animate-spin" : ""} />
-                      </button>
-                      <ChevronDown size={14} class="shrink-0 text-gray-400 {rollbackTargetsOpen ? 'rotate-180' : ''} transition-transform" />
-                    </div>
-
-                    {#if rollbackTargetsOpen}
-                      <div class="mt-2 space-y-2 border-t pt-2" style="border-color: var(--line);" transition:slide|local={{ duration: 180 }}>
-                        <p class="text-[11px]" style="color: var(--muted);">{ui.rollbackTargetsHint}</p>
-                        {#if rollbackTargetsLoading && !rollbackTargetsPayload}
-                          <div class="flex items-center gap-2 rounded-xl px-3 py-2 text-xs" style="background: var(--panel-soft); color: var(--muted);">
-                            <RefreshCw size={12} class="animate-spin" />
-                            {ui.rollbackTargetsLoading}
-                          </div>
-                        {:else if rollbackTargetsError}
-                          <div class="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{rollbackTargetsError}</div>
-                        {:else if !rollbackTargetsPayload || rollbackTargetsPayload.targets.length === 0}
-                          <div class="rounded-xl px-3 py-2 text-xs" style="background: var(--panel-soft); color: var(--muted);">{ui.rollbackTargetsEmpty}</div>
-                        {:else}
-                          <div class="max-h-72 space-y-1.5 overflow-y-auto pr-1">
-                            {#each rollbackTargetsPayload.targets as target (target.turnId ?? `${target.turnIndex}:${target.numTurns}`)}
-                              <button
-                                class="ui-animated-button ui-animated-button--soft flex w-full min-w-0 items-center gap-3 rounded-xl border px-3 py-2 text-left disabled:opacity-50"
-                                disabled={rollbackTargetsLoading}
-                                onclick={() => void rollbackCurrentThreadToTarget(target)}
-                                style="border-color: var(--line); background: var(--panel-soft); color: var(--ink-strong);"
-                                type="button"
-                              >
-                                <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border text-[10px] font-bold" style="border-color: var(--line); color: var(--muted);">
-                                  {target.turnIndex + 1}
-                                </span>
-                                <span class="min-w-0 flex-1">
-                                  <span class="block truncate text-xs font-semibold">{target.preview}</span>
-                                  <span class="mt-0.5 block truncate text-[10px]" style="color: var(--muted);">
-                                    {ui.rollbackTurnsCount}: {target.numTurns}
-                                    {#if target.startedAt}
-                                      · {formatTurnTimestamp(target.startedAt)}
-                                    {/if}
-                                  </span>
-                                </span>
-                                <RotateCcw size={13} class="shrink-0 text-red-500" />
-                              </button>
-                            {/each}
-                          </div>
-                        {/if}
-                        {#if rollbackTargetsPayload?.truncatedBefore}
-                          <p class="text-[10px]" style="color: var(--muted);">{ui.rollbackPreviewIncomplete}</p>
-                        {/if}
-                      </div>
-                    {/if}
                   </div>
                 {/if}
 
@@ -15811,7 +15588,7 @@
                     {/if}
                   </div>
                 {/if}
-                <form bind:this={composerPanelElement} class="codex-local-composer composer-panel bg-white/95 border-2 border-gray-200 rounded-2xl shadow-2xl overflow-hidden transition-all duration-200 focus-within:-translate-y-0.5 focus-within:border-amber-400/70 focus-within:bg-white focus-within:shadow-[0_24px_60px_-34px_rgba(245,158,11,0.65)]" onsubmit={(event) => { event.preventDefault(); void submitComposer(); }}>
+                <form bind:this={composerPanelElement} class="composer-panel bg-white/95 border-2 border-gray-200 rounded-2xl shadow-2xl overflow-hidden transition-all duration-200 focus-within:-translate-y-0.5 focus-within:border-amber-400/70 focus-within:bg-white focus-within:shadow-[0_24px_60px_-34px_rgba(245,158,11,0.65)]" onsubmit={(event) => { event.preventDefault(); void submitComposer(); }}>
                   <textarea bind:this={composerTextareaElement} bind:value={draft} class="composer-textarea w-full min-h-[3rem] overflow-y-hidden border-none bg-transparent px-4 py-3 pr-12 text-sm leading-6 text-gray-800 placeholder-gray-400 outline-none transition-colors duration-150 focus:outline-none focus:ring-0 focus:placeholder:text-amber-500/70 resize-none sm:min-h-[3.25rem]" oninput={handleComposerInput} onkeydown={handleComposerKeydown} placeholder={composerQueueModeActive ? ui.queueFollowUpPlaceholder : ui.askCodex} readonly={readOnlyRole} rows="1"></textarea>
                   
                   {#if draftAttachments.length > 0}
@@ -16806,97 +16583,6 @@
 {/if}
 
 <style>
-  /* Visual system: an intentional local coding workstation. */
-  .codex-local-shell {
-    background:
-      radial-gradient(circle at 68% -24%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 34rem),
-      var(--bg) !important;
-    color: var(--ink-strong) !important;
-  }
-
-  .codex-local-sidebar-frame {
-    border-color: color-mix(in srgb, var(--line) 84%, transparent) !important;
-  }
-
-  .codex-local-main,
-  .codex-local-chat {
-    background:
-      radial-gradient(circle at 74% 0%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 31rem),
-      var(--bg) !important;
-  }
-
-  .codex-local-transcript {
-    max-width: 60rem !important;
-    padding-inline: clamp(1rem, 3vw, 2.5rem) !important;
-  }
-
-  .codex-local-composer {
-    border-color: color-mix(in srgb, var(--line) 86%, transparent) !important;
-    background: color-mix(in srgb, var(--panel-strong) 94%, transparent) !important;
-    box-shadow:
-      0 28px 68px -42px rgba(15, 23, 42, 0.48),
-      inset 0 1px 0 color-mix(in srgb, white 26%, transparent) !important;
-  }
-
-  .codex-local-composer:focus-within {
-    border-color: color-mix(in srgb, var(--accent) 72%, var(--line)) !important;
-    background: var(--panel-strong) !important;
-    box-shadow:
-      0 28px 68px -40px color-mix(in srgb, var(--accent) 40%, transparent),
-      inset 0 1px 0 color-mix(in srgb, white 24%, transparent) !important;
-  }
-
-  .codex-local-composer .composer-toolbar {
-    border-color: color-mix(in srgb, var(--line) 74%, transparent) !important;
-    background: color-mix(in srgb, var(--panel-soft) 82%, var(--panel-strong)) !important;
-  }
-
-  .codex-local-composer .surface-contrast-button {
-    border: 1px solid color-mix(in srgb, var(--accent) 65%, transparent) !important;
-    background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 64%, #2c256d)) !important;
-    box-shadow: 0 14px 28px -18px color-mix(in srgb, var(--accent) 68%, transparent) !important;
-  }
-
-  .codex-local-composer .surface-contrast-button:hover:not(:disabled) {
-    filter: brightness(1.08);
-  }
-
-  .chat-transcript {
-    scroll-padding-top: 5rem;
-    scroll-padding-bottom: 14rem;
-  }
-
-  :global(.codex-local-shell button:focus-visible),
-  :global(.codex-local-shell input:focus-visible),
-  :global(.codex-local-shell select:focus-visible),
-  :global(.codex-local-shell textarea:focus-visible) {
-    outline: 2px solid var(--accent) !important;
-    outline-offset: 2px;
-  }
-
-  :global(:root[data-theme="dark"]) .codex-local-main .bg-white,
-  :global(:root[data-theme="dark"]) .codex-local-main .bg-gray-50,
-  :global(:root[data-theme="dark"]) .codex-local-main .bg-gray-100 {
-    background-color: var(--panel-strong) !important;
-  }
-
-  :global(:root[data-theme="dark"]) .codex-local-main .border-gray-100,
-  :global(:root[data-theme="dark"]) .codex-local-main .border-gray-200 {
-    border-color: color-mix(in srgb, var(--line) 84%, transparent) !important;
-  }
-
-  :global(:root[data-theme="dark"]) .codex-local-main .text-gray-900,
-  :global(:root[data-theme="dark"]) .codex-local-main .text-gray-800,
-  :global(:root[data-theme="dark"]) .codex-local-main .text-gray-700 {
-    color: var(--ink-strong) !important;
-  }
-
-  :global(:root[data-theme="dark"]) .codex-local-main .text-gray-600,
-  :global(:root[data-theme="dark"]) .codex-local-main .text-gray-500,
-  :global(:root[data-theme="dark"]) .codex-local-main .text-gray-400 {
-    color: var(--muted) !important;
-  }
-
   @keyframes thinking-chip-sheen {
     0% {
       transform: translateX(-132%);

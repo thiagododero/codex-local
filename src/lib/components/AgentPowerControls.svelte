@@ -30,7 +30,7 @@
   }
 </script>
 
-<div class:agent-power-controls--compact={compact} class="agent-power-controls grid gap-3">
+<div class="grid gap-3">
   <div class="flex items-center justify-between gap-3 px-1">
     <div>
       <p class="text-xs font-bold text-gray-900">Potencia del agente</p>
@@ -66,22 +66,3 @@
     <button type="button" class="rounded-xl bg-gray-950 px-3 py-2 text-xs font-bold text-white" disabled={disabled} onclick={setMaximum}>TODO AL PALO</button>
   </div>
 </div>
-
-<style>
-  .agent-power-controls--compact {
-    gap: 0.6rem;
-  }
-
-  .agent-power-controls--compact label {
-    border-color: color-mix(in srgb, var(--line) 80%, transparent) !important;
-    background: color-mix(in srgb, var(--panel-soft) 78%, transparent) !important;
-  }
-
-  :global(:root[data-theme="dark"]) .agent-power-controls .text-gray-900 {
-    color: var(--ink-strong) !important;
-  }
-
-  :global(:root[data-theme="dark"]) .agent-power-controls .text-gray-500 {
-    color: var(--muted) !important;
-  }
-</style>

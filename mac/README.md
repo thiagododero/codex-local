@@ -13,14 +13,14 @@ Codex Local usa **Codex app-server real** y modelos gratuitos de Ollama.
 - muestra sólo los modelos locales detectados en el selector de la interfaz;
 - mantiene un `CODEX_HOME` aislado del Codex normal;
 - abre el servidor únicamente en `127.0.0.1`;
-- genera login y secreto de sesión aleatorios;
+- genera un secreto de sesión aleatorio;
 - permite dos app-server de Codex simultáneos.
 
 ## Potencia del agente
 
 La seguridad externa de la aplicación y los permisos del agente son cosas separadas.
 
-La app mantiene localhost, login, cookies estrictas y control de Origin incluso cuando el agente está en modo máximo.
+La app no pide contraseña en el uso local: queda limitada a `127.0.0.1`, mantiene cookies estrictas y exige control de Origin incluso cuando el agente está en modo máximo. No debe exponerse a la red ni detrás de un proxy sin volver a configurar autenticación explícita.
 
 Desde **Security & Session** podés controlar:
 
