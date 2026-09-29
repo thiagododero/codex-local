@@ -2,6 +2,7 @@
 set -euo pipefail
 SUPPORT_DIR="$HOME/Library/Application Support/Codex Local v3"
 PID_FILE="$SUPPORT_DIR/runtime/backend.pid"
+RUNNING_BUILD_FILE="$SUPPORT_DIR/runtime/running-build.txt"
 
 if [[ ! -f "$PID_FILE" ]]; then
   echo "Codex Local v3 no parece estar ejecutándose."
@@ -16,5 +17,5 @@ if [[ -n "$PID" ]] && kill -0 "$PID" >/dev/null 2>&1; then
     sleep 0.2
   done
 fi
-rm -f "$PID_FILE"
+rm -f "$PID_FILE" "$RUNNING_BUILD_FILE"
 echo "✅ Codex Local v3 detenido."
