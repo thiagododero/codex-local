@@ -59,6 +59,7 @@
   } from "$lib/chat-state";
   import { CODEX_SLASH_COMMANDS, findCodexSlashCommand, type CodexSlashCommandEntry } from "$lib/codex-commands";
   import AuthLoginOverlay from "$lib/components/AuthLoginOverlay.svelte";
+  import AgentPowerControls from "$lib/components/AgentPowerControls.svelte";
   import FolderBrowserDialog from "$lib/components/FolderBrowserDialog.svelte";
   import LazyMonacoDiffEditor from "$lib/components/LazyMonacoDiffEditor.svelte";
   import MarkdownMessage from "$lib/components/MarkdownMessage.svelte";
@@ -594,10 +595,12 @@
     const locale = $activeLocale;
 
     return {
-      appTitle: m.app_title(),
-      loginTitle: m.login_page_title(),
-      privateGateway: m.private_gateway(),
-      loginLede: m.login_lede(),
+      appTitle: "Codex Local",
+      loginTitle: "Codex Local",
+      privateGateway: "LOCAL · PRIVATE",
+      loginLede: locale === "es"
+        ? "Codex real, modelos locales gratis y control total de permisos desde una sola interfaz."
+        : "Real Codex, free local models, and explicit permission controls in one interface.",
       password: m.password(),
       signIn: m.sign_in(),
       signingIn: m.signing_in(),
@@ -8749,6 +8752,37 @@
     }
   }
 
+  async function saveDefaultAgentPermissions(patch: Partial<SessionPreferences>) {
+    if (readOnlyRole) {
+      errorText = m.error_forbidden_role();
+      return;
+    }
+    if (!config) {
+      return;
+    }
+
+    try {
+      const nextConfig = applyLocalComposerPreferencesToConfig(await api.saveDefaultSessionPreferences(patch));
+      config = nextConfig;
+      syncConfiguredTheme(config);
+      if (!selectedSessionId && conversation) {
+        conversation = {
+          ...conversation,
+          preferences: {
+            ...conversation.preferences,
+            ...patch
+          }
+        };
+        markConversationCacheDirty();
+      }
+      noticeText = getLocale().startsWith("es")
+        ? "Permisos predeterminados del agente actualizados."
+        : "Default agent permissions updated.";
+    } catch (error) {
+      errorText = describeError(error);
+    }
+  }
+
   async function saveTitle() {
     if (readOnlyRole) {
       errorText = m.error_forbidden_role();
@@ -9104,6 +9138,47 @@
         return true;
       }
       errorText = m.slash_fast_invalid();
+      return true;
+    }
+
+    if (command === "max" || (command === "power" && ["max", "maximum", "full", "on"].includes(args.toLowerCase()))) {
+      if (readOnlyRole) {
+        errorText = m.error_forbidden_role();
+        return true;
+      }
+      setPreferencesPatch({
+        sandboxMode: "danger-full-access",
+        approvalPolicy: "never",
+        autoApproveMode: "session",
+        networkAccess: true
+      });
+      draft = "";
+      scheduleComposerTextareaResize();
+      noticeText = "⚡ Modo máximo activado para esta sesión.";
+      return true;
+    }
+
+    if (command === "safe" || (command === "power" && ["safe", "off", "normal"].includes(args.toLowerCase()))) {
+      if (readOnlyRole) {
+        errorText = m.error_forbidden_role();
+        return true;
+      }
+      setPreferencesPatch({
+        sandboxMode: "workspace-write",
+        approvalPolicy: "on-request",
+        autoApproveMode: "manual",
+        networkAccess: false
+      });
+      draft = "";
+      scheduleComposerTextareaResize();
+      noticeText = "🛡️ Modo seguro activado para esta sesión.";
+      return true;
+    }
+
+    if (command === "power" && !args) {
+      openComposerSettings("security");
+      draft = "";
+      scheduleComposerTextareaResize();
       return true;
     }
 
@@ -16182,28 +16257,15 @@
                       </div>
                     {:else}
                       <div class="space-y-4" role="tabpanel">
-                        <div class="space-y-1">
-                          <label class="px-1 text-[10px] font-bold uppercase tracking-widest text-gray-400" for="composer-approval-select">{ui.approvalMode}</label>
-                          <select class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm transition-all focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/10 disabled:cursor-not-allowed disabled:opacity-60" disabled={readOnlyRole} id="composer-approval-select" onchange={(event) => setPreference("autoApproveMode", (event.currentTarget as HTMLSelectElement).value as SessionPreferences["autoApproveMode"])} value={conversation.preferences.autoApproveMode ?? "manual"}>
-                            <option value="manual">{ui.manual}</option>
-                            <option value="turn">{ui.autoOnce}</option>
-                            <option value="session">{ui.autoSession}</option>
-                          </select>
+                        <AgentPowerControls
+                          preferences={conversation.preferences}
+                          disabled={readOnlyRole}
+                          compact={true}
+                          onChange={(patch) => setPreferencesPatch(patch)}
+                        />
+                        <div class="rounded-xl border border-gray-200 bg-gray-50/60 px-3 py-2 text-[10px] leading-4 text-gray-500">
+                          También podés escribir <strong>/max</strong> para activar todo o <strong>/safe</strong> para volver al modo protegido.
                         </div>
-                        <label class="checkbox-card" for="network-access">
-                          <input
-                            class="checkbox-input"
-                            checked={conversation.preferences.networkAccess ?? false}
-                            disabled={readOnlyRole}
-                            onchange={(event) => setPreference("networkAccess", (event.currentTarget as HTMLInputElement).checked)}
-                            type="checkbox"
-                            id="network-access"
-                          />
-                          <span aria-hidden="true" class="checkbox-control"></span>
-                          <span class="checkbox-copy">
-                            <span class="checkbox-title">{ui.allowNetworkAccess}</span>
-                          </span>
-                        </label>
                       </div>
                     {/if}
                   </div>
@@ -16277,6 +16339,9 @@
                 }}
                 onSaveDefaultLanguageBridge={async (enabled, outputLanguage) => {
                   await saveDefaultLanguageBridgeDefaults(enabled, outputLanguage);
+                }}
+                onSaveDefaultSessionPreferences={async (patch) => {
+                  await saveDefaultAgentPermissions(patch);
                 }}
                 onSaveThemeSettings={async (theme) => {
                   await saveThemeSettings(theme);
