@@ -30,7 +30,13 @@
 </script>
 
 <div class="grid gap-3">
-  <label class="flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5">
+  <div class="flex items-center justify-between gap-3 px-1">
+    <div>
+      <p class="text-xs font-bold text-gray-900">Potencia del agente</p>
+      <p class="text-[10px] text-gray-500">La protección externa de la app permanece activa.</p>
+    </div>
+  </div>
+  <label class="flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-gray-50/80 px-3 py-2.5">
     <span><strong class="block text-xs">Full Access</strong><small class="text-gray-500">Acceso completo del agente.</small></span>
     <input type="checkbox" checked={preferences?.sandboxMode === "danger-full-access"} disabled={disabled}
       onchange={(event) => apply({ sandboxMode: (event.currentTarget as HTMLInputElement).checked ? "danger-full-access" : "workspace-write" })} />
@@ -56,6 +62,6 @@
 
   <div class="grid grid-cols-2 gap-2">
     <button type="button" class="rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-bold" disabled={disabled} onclick={setSafe}>Modo seguro</button>
-    <button type="button" class="rounded-xl bg-gray-950 px-3 py-2 text-xs font-bold text-white" disabled={disabled} onclick={setMaximum}>Máximo</button>
+    <button type="button" class="rounded-xl bg-gray-950 px-3 py-2 text-xs font-bold text-white" disabled={disabled} onclick={setMaximum}>TODO AL PALO</button>
   </div>
 </div>
