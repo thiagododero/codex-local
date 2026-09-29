@@ -637,7 +637,7 @@
       tasks: m.tasks(),
       gitWorkspace: m.git_workspace(),
       settings: m.settings(),
-      settingsSkills: m.settings_skills(),
+      settingsSkills: locale === "es" ? "Skills" : "Skills",
       installedSkills: m.installed_skills(),
       noSkills: m.no_local_skills(),
       newTerminal: m.new_terminal(),
@@ -796,7 +796,7 @@
       steerNow: m.steer_now(),
       sendNow: m.send_now(),
       liveTurn: m.live_turn(),
-      composerSettings: m.composer_settings(),
+      composerSettings: locale === "es" ? "Modelo y chat" : "Model & chat",
       sendShortcut:
         locale === "ko"
           ? "전송 키"
@@ -907,7 +907,7 @@
                           : locale === "ru"
                             ? "Повторная синхронизация состояния сессии."
                             : "Resynchronizing session state.",
-      securitySession: m.security_session(),
+      securitySession: locale === "es" ? "Permisos" : "Permissions",
       addAttachments: m.add_attachments(),
       selectFolder: m.select_folder(),
       stop: m.stop(),
