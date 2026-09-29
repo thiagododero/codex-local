@@ -284,7 +284,7 @@
     const isKorean = getLocale().startsWith("ko");
 
     return {
-      appShortName: m.app_short_name(),
+      appShortName: "Codex Local",
       newThread: m.new_thread(),
       active: m.active(),
       archived: m.archived(),
@@ -1063,7 +1063,7 @@
   <div class="p-4 flex flex-col gap-4">
     <div class="relative flex items-center justify-between">
       <div class="flex items-center gap-2 px-1">
-        <div class="w-8 h-8 bg-amber-600 rounded-lg flex items-center justify-center text-white font-bold">C</div>
+        <div class="w-8 h-8 bg-gray-950 rounded-lg flex items-center justify-center text-white font-bold shadow-sm">C</div>
         <h1 class="text-lg font-semibold tracking-tight text-gray-900">{ui.appShortName}</h1>
       </div>
       <div class="flex items-center gap-1.5">
