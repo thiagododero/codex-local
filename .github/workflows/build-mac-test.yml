@@ -1,0 +1,90 @@
+name: Build Mac Test Package
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - codex-local-v3
+    paths:
+      - "backend/**"
+      - "src/**"
+      - "static/**"
+      - "scripts/**"
+      - "mac/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "svelte.config.js"
+      - "vite.config.ts"
+      - ".github/workflows/build-mac-test.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build-mac-arm64:
+    runs-on: macos-14
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.13.1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
+
+      - name: Install JS dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build web app and host backend
+        run: pnpm build
+
+      - name: Build Apple Silicon backend
+        run: |
+          cargo build --release \
+            --target aarch64-apple-darwin \
+            --manifest-path backend/Cargo.toml
+          mkdir -p dist/backend/aarch64-apple-darwin
+          cp backend/target/aarch64-apple-darwin/release/backend \
+            dist/backend/aarch64-apple-darwin/backend
+          chmod +x dist/backend/aarch64-apple-darwin/backend
+
+      - name: Verify static build
+        run: pnpm verify:static-build
+
+      - name: Package Codex Local v3
+        run: |
+          rm -rf package-out
+          mkdir -p "package-out/Codex Local v3/build"
+          mkdir -p "package-out/Codex Local v3/dist/backend/aarch64-apple-darwin"
+          cp -R build/static "package-out/Codex Local v3/build/static"
+          cp dist/backend/aarch64-apple-darwin/backend \
+            "package-out/Codex Local v3/dist/backend/aarch64-apple-darwin/backend"
+          cp mac/ABRIR.command "package-out/Codex Local v3/ABRIR.command"
+          cp mac/CERRAR.command "package-out/Codex Local v3/CERRAR.command"
+          cp mac/README.md "package-out/Codex Local v3/LEEME.md"
+          cp LICENSE "package-out/Codex Local v3/LICENSE"
+          chmod +x "package-out/Codex Local v3/ABRIR.command"
+          chmod +x "package-out/Codex Local v3/CERRAR.command"
+          cd package-out
+          ditto -c -k --sequesterRsrc --keepParent "Codex Local v3" "Codex_Local_v3_Mac_Apple_Silicon.zip"
+
+      - name: Upload test package
+        uses: actions/upload-artifact@v4
+        with:
+          name: Codex_Local_v3_Mac_Apple_Silicon
+          path: package-out/Codex_Local_v3_Mac_Apple_Silicon.zip
+          if-no-files-found: error
+          retention-days: 14
