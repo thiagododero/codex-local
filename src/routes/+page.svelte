@@ -1240,8 +1240,40 @@
     };
   }
 
+  function normalizeAvailableModelPreference(
+    preferences: SessionPreferences,
+    models: AppConfigPayload["models"],
+    preferredModel: string | null | undefined = null
+  ): SessionPreferences {
+    const modelIds = models.map((model) => model.id).filter(Boolean);
+    if (modelIds.length === 0) {
+      return preferences;
+    }
+
+    const currentModel = preferences.model?.trim() || null;
+    if (currentModel && modelIds.includes(currentModel)) {
+      return preferences;
+    }
+
+    const fallbackModel =
+      (preferredModel && modelIds.includes(preferredModel) ? preferredModel : null) ??
+      models.find((model) => model.isDefault)?.id ??
+      modelIds[0] ??
+      null;
+
+    if (preferences.model === fallbackModel) {
+      return preferences;
+    }
+
+    return {
+      ...preferences,
+      model: fallbackModel
+    };
+  }
+
   function applyLocalComposerPreferencesToConfig(nextConfig: AppConfigPayload): AppConfigPayload {
-    const nextDefaults = applyLocalSendOnEnterPreference(nextConfig.defaults);
+    let nextDefaults = applyLocalSendOnEnterPreference(nextConfig.defaults);
+    nextDefaults = normalizeAvailableModelPreference(nextDefaults, nextConfig.models, nextConfig.defaults.model);
     if (nextDefaults === nextConfig.defaults) {
       return nextConfig;
     }
@@ -1252,7 +1284,10 @@
   }
 
   function applyLocalComposerPreferencesToConversation(state: ConversationState): ConversationState {
-    const nextPreferences = applyLocalSendOnEnterPreference(state.preferences);
+    let nextPreferences = applyLocalSendOnEnterPreference(state.preferences);
+    if (config) {
+      nextPreferences = normalizeAvailableModelPreference(nextPreferences, config.models, config.defaults.model);
+    }
     if (nextPreferences === state.preferences) {
       return state;
     }
@@ -6455,7 +6490,11 @@
               agentRole: summaryForSelection.agentRole,
               turns: []
             },
-            preferences: summaryForSelection.preferences ?? config.defaults,
+            preferences: normalizeAvailableModelPreference(
+              summaryForSelection.preferences ?? config.defaults,
+              config.models,
+              config.defaults.model
+            ),
             selectedSkills: [],
             goal: null,
             attachments: [],
@@ -7201,7 +7240,20 @@
     if (flushPendingEvents) {
       nextConversation = flushPendingSessionEvents(sessionId, profileId, nextConversation);
     }
+    const loadedModelBeforeNormalization = nextConversation.preferences.model;
     nextConversation = applyLocalComposerPreferencesToConversation(normalizeConversationExecutionState(nextConversation));
+    const normalizedLoadedModel = nextConversation.preferences.model;
+    if (
+      loadedModelBeforeNormalization !== normalizedLoadedModel &&
+      normalizedLoadedModel &&
+      selectedSessionId === sessionId
+    ) {
+      void api
+        .savePreferences(sessionId, { model: normalizedLoadedModel }, profileId)
+        .catch((error) => {
+          errorText = describeError(error);
+        });
+    }
     const mergedQueue = mergeQueueSnapshot(sessionQueueSnapshotsBySessionId[scopeKey], nextConversation.queue);
     if (mergedQueue !== nextConversation.queue) {
       nextConversation = {
